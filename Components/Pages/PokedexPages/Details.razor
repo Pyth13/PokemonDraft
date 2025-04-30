@@ -1,0 +1,79 @@
+﻿@page "/pokedex/details"
+@using Microsoft.EntityFrameworkCore
+@using PokemonDraft.Models
+@inject IDbContextFactory<PokemonDraft.Data.PokemonDraftContext> DbFactory
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize(Policy = UserPolicy.EDIT_PRODUCT)]
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Pokedex</h2>
+    <hr />
+    @if (pokedex is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">DexNum</dt>
+            <dd class="col-sm-10">@pokedex.DexNum</dd>
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@pokedex.Name</dd>
+            <dt class="col-sm-2">Hp</dt>
+            <dd class="col-sm-10">@pokedex.Hp</dd>
+            <dt class="col-sm-2">Atk</dt>
+            <dd class="col-sm-10">@pokedex.Atk</dd>
+            <dt class="col-sm-2">Def</dt>
+            <dd class="col-sm-10">@pokedex.Def</dd>
+            <dt class="col-sm-2">Spa</dt>
+            <dd class="col-sm-10">@pokedex.Spa</dd>
+            <dt class="col-sm-2">Spd</dt>
+            <dd class="col-sm-10">@pokedex.Spd</dd>
+            <dt class="col-sm-2">Spe</dt>
+            <dd class="col-sm-10">@pokedex.Spe</dd>
+            <dt class="col-sm-2">Bst</dt>
+            <dd class="col-sm-10">@pokedex.Bst</dd>
+            <dt class="col-sm-2">TypeA</dt>
+            <dd class="col-sm-10">@pokedex.TypeA</dd>
+            <dt class="col-sm-2">TypeB</dt>
+            <dd class="col-sm-10">@pokedex.TypeB</dd>
+            <dt class="col-sm-2">AbilityA</dt>
+            <dd class="col-sm-10">@pokedex.AbilityA</dd>
+            <dt class="col-sm-2">AbilityB</dt>
+            <dd class="col-sm-10">@pokedex.AbilityB</dd>
+            <dt class="col-sm-2">AbilityC</dt>
+            <dd class="col-sm-10">@pokedex.AbilityC</dd>
+            <dt class="col-sm-2">Tier</dt>
+            <dd class="col-sm-10">@pokedex.Tier</dd>
+            <dt class="col-sm-2">Trainer</dt>
+            <dd class="col-sm-10">@pokedex.Trainer</dd>
+        </dl>
+        <div>
+            <a href="@($"/pokedex/edit?id={pokedex.Id}")">Edit</a> |
+            <a href="@($"/pokedex")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Pokedex? pokedex;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        pokedex = await context.Pokedex.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (pokedex is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

@@ -1,0 +1,531 @@
+﻿@page "/livedraft"
+@rendermode InteractiveServer
+@using System.Timers
+@using System.Globalization
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using PokemonDraft.Models
+@using PokemonDraft.Models.Entities
+@using PokemonDraft.Data
+
+@inject IDbContextFactory<PokemonDraft.Data.PokemonDraftContext> DbFactory
+
+<h3>Draft Home</h3>
+
+@if (confirmPopup)
+{
+    <div class="modal-overlay" @onclick="HideConfirm">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <h3>Confirm Window</h3>
+            <p>Sample Text</p>
+            <button class="pick-button" @onclick="HideConfirm">Confirm Selection</button>
+            <button class="btn btn-secondary" @onclick="HideConfirm">Go Back</button>
+        </div>
+    </div>
+}
+
+@if (isTimeUp)
+{
+    <p class="alert alert-danger">Time's Up!</p>
+}
+
+<div class="draft-box">
+    <div>
+    <h3>Draft Timer</h3>
+
+    <p>Time remaining: @remainingTimeFormatted</p>
+
+    <p>Round: @round, Pick: @pick</p>
+
+    @if (isTimeUp)
+    {
+        <p class="alert alert-danger">Time's Up!</p>
+    }
+
+    <button @onclick="SetTimerTo4Hours">Early Round Timer</button>
+    <button @onclick="SetTimerTo2Hours">Later Round Timer</button>
+    <button @onclick="SetTimerTo3PM">DEBUG</button>
+    <button @onclick="ResetTimerTo4Hours">Next Player</button>
+
+        <br>Recent Picks<br />
+
+    <div class="box">
+            <QuickGrid style="width:100%" Pagination="@pagination" Items="DraftFilter" Theme="draft">
+            <PropertyColumn Property="DraftStats => DraftStats.Pick" Sortable="true" />
+            <PropertyColumn Property="DraftStats => DraftStats.Round" Sortable="true" />
+            <PropertyColumn Property="DraftStats => DraftStats.Pokemon" Sortable="true" />
+            <PropertyColumn Property="DraftStats => DraftStats.Owner" Sortable="true" />
+            <PropertyColumn Property="DraftStats => DraftStats.Tier" Sortable="true" />
+            <TemplateColumn Context="roster">
+            </TemplateColumn>
+        </QuickGrid>
+        <Paginator State="@pagination" />
+    </div>
+
+    </div>
+    <div>upcoming picks
+        <div class="box">
+            <QuickGrid style="width:100%" Pagination="@pagination" Items="DraftFilter" Theme="draft">
+                <PropertyColumn Property="DraftStats => DraftStats.Owner" Sortable="true" />
+                <TemplateColumn Context="roster">
+                </TemplateColumn>
+            </QuickGrid>
+            <Paginator State="@pagination" />
+        </div>
+    </div>
+    <div>picks remaining
+        <br>Mega: <br /> X<br />
+        <br>Tier 1 <br /> O X <br />
+        <br>Tier 2 <br /> X X <br />
+        <br>Tier 3 <br /> O O <br />
+        <br>Tier 4 <br /> X X <br />
+        <br>Tier 5 <br /> O O <br />
+    </div>
+    <div>Roster
+        <QuickGrid style = "width:100%" Items="RosterFilter" Theme="roster">
+            <PropertyColumn Property="roster => roster.Mega" Sortable="true"/>
+        <TemplateColumn Context="roster">
+        </TemplateColumn>
+        </QuickGrid>
+        <QuickGrid style="width:100%" Items="RosterFilter" Theme="roster">
+            <PropertyColumn Property="roster => roster.TierOneA" Sortable="true" />
+            <PropertyColumn Property="roster => roster.TierOneB" Sortable="true" />
+            <TemplateColumn Context="roster">
+            </TemplateColumn>
+        </QuickGrid>
+        <QuickGrid style="width:100%" Items="RosterFilter" Theme="roster">
+            <PropertyColumn Property="roster => roster.TierTwoA" Sortable="true" />
+            <PropertyColumn Property="roster => roster.TierTwoB" Sortable="true" />
+            <TemplateColumn Context="roster">
+            </TemplateColumn>
+        </QuickGrid>
+        <QuickGrid style="width:100%" Items="RosterFilter" Theme="roster">
+            <PropertyColumn Property="roster => roster.TierThreeA" Sortable="true" />
+            <PropertyColumn Property="roster => roster.TierThreeB" Sortable="true" />
+            <TemplateColumn Context="roster">
+            </TemplateColumn>
+        </QuickGrid>
+        <QuickGrid style="width:100%" Items="RosterFilter" Theme="roster">
+            <PropertyColumn Property="roster => roster.TierFourA" Sortable="true" />
+            <PropertyColumn Property="roster => roster.TierFourB" Sortable="true" />
+            <TemplateColumn Context="roster">
+            </TemplateColumn>
+        </QuickGrid>
+        <QuickGrid style="width:100%" Items="RosterFilter" Theme="roster">
+            <PropertyColumn Property="roster => roster.TierFiveA" Sortable="true" />
+            <PropertyColumn Property="roster => roster.TierFiveB" Sortable="true" />
+            <TemplateColumn Context="roster">
+            </TemplateColumn>
+        </QuickGrid>
+    </div>
+</div>
+
+<div class="pick-box">
+    <div class = "box">
+        <div class="grid">
+        <h3>Banned</h3>
+        <QuickGrid Items="TierFilter" Theme="pokedex">
+        <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
+        <TemplateColumn Context="pokedex">
+        </TemplateColumn>
+        </QuickGrid>
+        </div>
+    </div>
+
+    <div class = "box">
+        <div class="grid">
+        <h3>Mega</h3>
+        <QuickGrid Items="MegaFilter" Theme="pokedex">
+        <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
+        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        <TemplateColumn Context="pokedex">
+            <div class="pick-button">
+                <button type="submit" @onclick="PickClick" value="Mega" class="btn btn-primary">PICK</button> 
+            </div>
+        </TemplateColumn>
+        </QuickGrid>
+        </div>
+    </div>
+
+    <div class = "box">
+        <div class="grid">
+        <h3>Tier 1</h3>
+        <QuickGrid Items="TierOneFilter" Theme="pokedex">
+        <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
+        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        <TemplateColumn Context="pokedex">
+            <div class="pick-button">
+                <button type="submit" class="btn btn-primary">PICK</button> 
+            </div>
+        </TemplateColumn>
+        </QuickGrid>
+        </div>
+    </div>
+
+    <div class = "box">
+        <div class="grid">
+        <h3>Tier 2</h3>
+        <QuickGrid Items="TierTwoFilter" Theme="pokedex">
+        <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
+        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        <TemplateColumn Context="pokedex">
+            <div class="pick-button">
+                <button type="submit" class="btn btn-primary">PICK</button> 
+            </div>
+        </TemplateColumn>
+        </QuickGrid>
+        </div>
+    </div>
+
+    <div class = "box">
+        <div class="grid">
+        <h3>Tier 3</h3>
+        <QuickGrid Items="TierThreeFilter" Theme="pokedex">
+        <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
+        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        <TemplateColumn Context="pokedex">
+            <div class="pick-button">
+                <button type="submit" class="btn btn-primary">PICK</button> 
+            </div>
+        </TemplateColumn>
+        </QuickGrid>
+        </div>
+    </div>
+
+    <div class = "box">
+        <div class="grid">
+        <h3>Tier 4</h3>
+        <QuickGrid Items="TierFourFilter" Theme="pokedex">
+        <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
+        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        <TemplateColumn Context="pokedex">
+            <div class="pick-button">
+                <button type="submit" class="btn btn-primary">PICK</button> 
+            </div>
+        </TemplateColumn>
+        </QuickGrid>
+        </div>
+    </div>
+
+    <div class = "box">
+        <div class="grid">
+        <h3>Tier 5</h3>
+        <QuickGrid Items="TierFiveFilter" Theme="pokedex">
+        <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
+        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        <TemplateColumn Context="pokedex">
+            <div class="pick-button">
+                <button type="submit" class="btn btn-primary">PICK</button> 
+            </div>
+        </TemplateColumn>
+        </QuickGrid>
+        </div>
+    </div>
+
+    <div class = "box">
+        <div class="grid">
+        <h3>Untiered(Tier 5) <br /></h3>
+        <QuickGrid Items="UntieredFilter" Theme="pokedex">
+        <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
+        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        <TemplateColumn Context="pokedex">
+            <div class="pick-button">
+                <button type="submit" class="btn btn-primary">PICK</button> 
+            </div>
+        </TemplateColumn>
+        </QuickGrid>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private PokemonDraftContext context = default!;
+
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+
+    private bool confirmPopup = false;
+
+    public void PickClick()
+    {
+        confirmPopup = true;
+    }
+
+    private void HideConfirm()
+    {
+        confirmPopup = false;
+    }
+
+    private IQueryable<Pokedex> TierFilter
+    {
+        get
+        {
+            context = DbFactory.CreateDbContext();
+            var result = context.Pokedex.Where(x => x.Tier!.Contains("Banned"));
+            return result;
+        }      
+    }
+
+    private IQueryable<Pokedex> MegaFilter
+    {
+        get
+        {
+            context = DbFactory.CreateDbContext();
+            var result = context.Pokedex.Where(x => x.Tier!.Contains("Mega"));
+            result = result.Where(x => x.Trainer!.Contains("Free Agent"));
+            return result;
+        }      
+    }
+
+    private IQueryable<Pokedex> TierOneFilter
+    {
+        get
+        {
+            context = DbFactory.CreateDbContext();
+            var result = context.Pokedex.Where(x => x.Tier!.Contains("One"));
+            result = result.Where(x => x.Trainer!.Contains("Free Agent"));
+            return result;
+        }      
+    }
+
+    private IQueryable<Pokedex> TierTwoFilter
+    {
+        get
+        {
+            context = DbFactory.CreateDbContext();
+            var result = context.Pokedex.Where(x => x.Tier!.Contains("Two"));
+            result = result.Where(x => x.Trainer!.Contains("Free Agent"));
+            return result;
+        }      
+    }
+
+    private IQueryable<Pokedex> TierThreeFilter
+    {
+        get
+        {
+            context = DbFactory.CreateDbContext();
+            var result = context.Pokedex.Where(x => x.Tier!.Contains("Three"));
+            result = result.Where(x => x.Trainer!.Contains("Free Agent"));
+            return result;
+        }      
+    }
+
+    private IQueryable<Pokedex> TierFourFilter
+    {
+        get
+        {
+            context = DbFactory.CreateDbContext();
+            var result = context.Pokedex.Where(x => x.Tier!.Contains("Four"));
+            result = result.Where(x => x.Trainer!.Contains("Free Agent"));
+            return result;
+        }      
+    }
+
+    private IQueryable<Pokedex> TierFiveFilter
+    {
+        get
+        {
+            context = DbFactory.CreateDbContext();
+            var result = context.Pokedex.Where(x => x.Tier!.Contains("Five"));
+            result = result.Where(x => x.Trainer!.Contains("Free Agent"));
+            return result;
+        }      
+    }
+
+    private IQueryable<Pokedex> UntieredFilter
+    {
+        get
+        {
+            context = DbFactory.CreateDbContext();
+            var result = context.Pokedex.Where(x => x.Tier!.Contains("Six"));
+            result = result.Where(x => x.Trainer!.Contains("Free Agent"));
+            return result;
+        }      
+    }
+
+    private IQueryable<Roster> RosterFilter
+    {
+       get
+       {
+           context = DbFactory.CreateDbContext();
+           var result = context.Rosters.Where(x => x.TeamName!.Contains("Tormenting Togekiss"));
+           //var result = context.Rosters.Where(x => x.TeamOwner!.Contains("Pyth"));
+           //var testOne = context.UserAccounts.Where(x => x.Team!.Equals(1));
+           return result;
+       }
+    }
+
+    /*private IQueryable<Roster> RosterFilter
+    {
+        get
+        {
+            context = DbFactory.CreateDbContext();
+            var result = context.Rosters.Where(x => x.TeamName!.Contains("Tormenting Togekiss"));
+            //var result = context.Rosters.Where(x => x.TeamOwner!.Contains("Pyth"));
+            //var testOne = context.UserAccounts.Where(x => x.Team!.Equals(1));
+            return result; 
+        }      
+    }*/
+
+    private IQueryable<DraftStats> DraftFilter
+    {
+        get
+        {
+            context = DbFactory.CreateDbContext();
+            var result = context.DraftStats.Where(x => x.Pick! > 0);
+            return result;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+    private Timer _timer;
+    private TimeSpan _remainingTime;
+    private bool _isRunning = false;
+    private bool isTimeUp = false;
+    private string remainingTimeFormatted => _remainingTime.ToString(@"hh\:mm\:ss");
+
+    private int round = 1;
+    private int pick = 1;
+    private int timezone;
+    private bool penalty = false;
+    private int playerCount = 16;
+
+    // Method to start the countdown timer
+    private void StartTimer()
+    {
+        if (_timer == null)
+        {
+            _timer = new Timer(1000); // Timer will tick every second
+            _timer.Elapsed += TimerElapsed;
+        }
+
+        _timer.Start();
+        _isRunning = true;
+    }
+
+    // Method to stop the countdown timer
+    private void StopTimer()
+    {
+        _timer?.Stop();
+        _isRunning = false;
+    }
+
+    // Timer's Elapsed event handler
+    private void TimerElapsed(object sender, ElapsedEventArgs e)
+    {
+        if (ShouldPauseTimer())
+        {
+            // If the time is between 00:00 and 08:00 EST, pause the timer.
+            StopTimer();
+        }
+        else
+        {
+            if (_remainingTime.TotalSeconds > 0)
+            {
+                _remainingTime = _remainingTime.Add(TimeSpan.FromSeconds(-1)); // Decrement time by 1 second
+                InvokeAsync(StateHasChanged); // Update the UI
+            }
+            else
+            {
+                // Timer finished, show "Time's Up!" message
+                isTimeUp = true;
+                StopTimer();
+                InvokeAsync(StateHasChanged); // Update UI with "Time's Up!"
+            }
+        }
+    }
+
+    // Method to check if the current time is between 00:00 and 08:00 EST
+    private bool ShouldPauseTimer()
+    {
+        var currentTime = DateTime.UtcNow.AddHours(-5); // Convert to EST (UTC-5)
+
+        // Check if current time is between 00:00 and 08:00 EST
+        return currentTime.Hour >= 0 && currentTime.Hour < 8;
+    }
+
+    // Button to set timer to 4 hours
+    private void SetTimerTo4Hours()
+    {
+        if(pick == playerCount)
+        {
+            round++;
+            pick = 0;
+        } 
+        pick++;
+
+        _remainingTime = TimeSpan.FromHours(4);
+        isTimeUp = false; // Reset "Time's Up!" flag
+        if (!_isRunning)
+        {
+            StartTimer();
+        }
+    }
+
+    // Button to set timer to 2 hours
+    private void SetTimerTo2Hours()
+    {
+
+        if (pick == playerCount)
+        {
+            round++;
+            pick = 0;
+        }
+        pick++;
+
+        if(round > 11)
+        {
+            round = 11;
+            pick = 16;
+            isTimeUp = true;
+        }
+        else
+        {
+            _remainingTime = TimeSpan.FromHours(2);
+            isTimeUp = false; // Reset "Time's Up!" flag
+            if (!_isRunning)
+            {
+                StartTimer();
+            }
+        }
+    }
+
+    // Button to set timer to countdown to 3 PM EST
+    private void SetTimerTo3PM()
+    {
+        var currentTime = DateTime.UtcNow.AddHours(-5); // Convert to EST (UTC-5)
+        var targetTime = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 14, 3, 0); // 3 PM EST
+
+        if (currentTime > targetTime)
+        {
+            // If current time is already past 3 PM today, set the timer to 3 PM tomorrow
+            targetTime = targetTime.AddDays(1);
+        }
+
+        _remainingTime = targetTime - currentTime; // Calculate the time remaining to 3 PM EST
+        isTimeUp = false; // Reset "Time's Up!" flag
+        if (!_isRunning)
+        {
+            StartTimer();
+        }
+    }
+
+    // Button to reset the timer to 4 hours
+    private void ResetTimerTo4Hours()
+    {
+        if (round < 5) { SetTimerTo4Hours(); }
+        else { SetTimerTo2Hours(); }
+    }
+}

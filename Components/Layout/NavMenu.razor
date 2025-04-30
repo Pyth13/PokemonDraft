@@ -1,0 +1,45 @@
+﻿<div class="top-row ps-1 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">PokemonDraft</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+
+        <div class="nav-item px-1">
+            <NavLink class="nav-link" href="Pokedex">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Pokedex
+            </NavLink>
+            <AuthorizeView Policy="@UserPolicy.VIEW_PRODUCT">
+                <Authorized>
+                    <NavLink class="nav-link" href="DraftSheet">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Draft Sheet
+                    </NavLink>
+                </Authorized>
+            </AuthorizeView>     
+            
+                <Authorized>
+                    <NavLink class="nav-link" href="LiveDraft">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Draft Home
+                    </NavLink>
+                </Authorized>
+            
+            <AuthorizeView>
+                <Authorized>
+                    <NavLink class="nav-link" href="Logout">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Logout
+                    </NavLink>
+                </Authorized>
+                <NotAuthorized>
+                    <NavLink class="nav-link" href="Login">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Login
+                    </NavLink>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </nav>
+</div>
+

@@ -1,0 +1,18 @@
+﻿@page "/draftsheet"
+@rendermode InteractiveServer
+@using PokemonDraft.Models
+@using PokemonDraft.Data
+@using PokemonDraft.Models.Entities
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+
+
+
+<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQIM5pYfFd3IhECt2WrhRh0ht9z01oSYKYEsMh6A2ar5skPa1I8uCX-IPzE05Pbtpyb1emtvYbtm6w9/pubhtml?widget=true&amp;headers=false" 
+    width="1250" height="750"></iframe>
+
+@code {
+    //@attribute [Authorize(Policy = UserPolicy.VIEW_PRODUCT)]
+}

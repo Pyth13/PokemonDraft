@@ -1,0 +1,25 @@
+﻿
+::deep .quickgrid[theme=pokedex] {
+    font-family: 'Comic Sans MS', 'Times New Roman', serif;
+}
+
+    ::deep .quickgrid[theme=pokedex] .col-title {
+        gap: 0.1rem; /* Separate the sort indicator from title text */
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    ::deep .quickgrid[theme=pokedex] .sort-indicator {
+        color: blue;
+    }
+
+    ::deep .quickgrid[theme=pokedex] button.col-title:hover, ::deep .quickgrid[theme=pokedex] .col-options-button:hover {
+
+    }
+
+    ::deep .quickgrid[theme=pokedex] button.col-title:active, ::deep .quickgrid[theme=pokedex] .col-options-button:active {
+
+    }
+
+h1 {
+}

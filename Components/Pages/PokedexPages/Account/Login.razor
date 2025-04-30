@@ -1,0 +1,97 @@
+﻿@page "/login"
+@using PokemonDraft.Data
+@using PokemonDraft.Models.ViewModels
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.EntityFrameworkCore
+@using BCrypt.Net
+@inject PokemonDraftContext dbContext
+@inject NavigationManager navigationManager
+
+<div class="row">
+    <div class="col-lg-4 offset-lg-4 pt-4 pb-4 border">
+        <EditForm Model="Model" OnValidSubmit="Authenticate" FormName="LoginForm">
+            <DataAnnotationsValidator />
+            <div class="mb-3 text-center flex-column">
+                <h3>Login</h3>
+            </div>
+            <div class="mb-3">
+                <label>Username</label>
+                <InputText @bind-Value="Model.UserName" class="form-control" placeholder="username"/>
+                <ValidationMessage For="() => Model.UserName"/>
+            </div>
+            <div class="mb-3">
+                <label>Password</label>
+                <InputText @bind-Value="Model.Password" placeholder="password" type="password" class="form-control"/>
+                <ValidationMessage For="() => Model.Password"/>
+            </div>
+            <div class="mb-3 text-center">
+                <span class="text-danger">@errorMessage</span>
+            </div>
+            <div class="mb-3 d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Login</button>
+            </div>
+        </EditForm>
+
+        <NavLink class="nav-link" href="CreateAccount">
+            <div class="mb-3 d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </div>
+        </NavLink>     
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    [SupplyParameterFromForm]
+    public LoginViewModel Model { get; set; } = new();
+
+    public string? errorMessage;
+
+    public async Task Authenticate()
+    {
+        if(string.IsNullOrWhiteSpace(Model.UserName) ||
+            string.IsNullOrWhiteSpace(Model.Password))
+        {
+            errorMessage = "Invalid username or password";
+            return;
+        }
+
+        var userAccount = dbContext.UserAccounts.Where(x => x.UserName == Model.UserName).FirstOrDefault();
+
+        if (userAccount is null || !BCrypt.EnhancedVerify(Model.Password, userAccount.Password))
+            {
+            errorMessage = "Invalid username or password";
+            return;
+        }
+
+        /*if (BCrypt.EnhancedVerify(Model.Password, userAccount.Password))
+        {
+            errorMessage = "hash verified";
+            return;
+        }
+        else
+        {
+            errorMessage = "hash not verified";
+            return;
+        }*/
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, Model.UserName)
+        };
+
+        var UserAccountPolicies = await dbContext.UserAccountsPolicies.Where(x => x.UserAccountId == userAccount.Id &&
+            x.IsEnabled).ToListAsync();
+        foreach (var userAccountPolicy in UserAccountPolicies)
+            claims.Add(new Claim(userAccountPolicy.UserPolicy, "true"));
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+        await HttpContext!.SignInAsync(principal);
+        navigationManager.NavigateTo("/");
+    }
+}

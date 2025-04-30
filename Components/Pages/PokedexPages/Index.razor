@@ -1,0 +1,641 @@
+﻿@page "/pokedex"
+@page "/"
+@rendermode InteractiveServer
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using PokemonDraft.Models
+@using PokemonDraft.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<PokemonDraft.Data.PokemonDraftContext> DbFactory
+<!DOCTYPE html>
+
+<html>
+<head>
+    
+</head>
+<body>
+
+<AuthorizeView>
+    <Authorized>
+        <h1>Logged in as <b>@context.User.Identity.Name</b></h1>
+    </Authorized>
+</AuthorizeView>
+
+<PageTitle>Index</PageTitle>
+
+<h1>Pokedex</h1>
+
+<p>
+    <lable>Name:</lable>
+    <input type="search" @bind="nameFilter" @bind:event="oninput" />
+
+    <lable>Ability:</lable>
+    <input type="search" @bind="abilityFilter" @bind:event="oninput" />
+
+    <label>Tier:</label>
+    <select @bind="tierFilter">
+        <option value="">All</option>
+        <option value="Mega">Mega</option>
+        <option value="One">1</option>
+        <option value="Two">2</option>
+        <option value="Three">3</option>
+        <option value="Four">4</option>
+        <option value="Five">5</option>
+        <option value="Six">Untiered</option>
+    </select>
+
+    <lable>Trainer:</lable>
+        <select @bind="trainerFilter">
+            <option value="">All</option>
+            <option value="Free Agent">Free Agent</option>
+            <option value="Pyth">Pyth</option>
+            <option value="Rusty">Rusty</option>
+            <option value="Inuktitut">Inuktitut</option>
+            <option value="Delsere">Delsere</option>
+            <option value="Austin">Austin</option>
+            <option value="Tori">Tori</option>
+            <option value="ThatHalfAss">ThatHalfAss</option>
+            <option value="Bigbuff">Bigbuff</option>
+            <option value="Ceise">Ceise</option>
+            <option value="Orasyn">Orasyn</option>
+            <option value="Abby">Abby</option>
+            <option value="Kaboomie">Kaboomie</option>
+            <option value="Zuzu">Zuzu</option>
+            <option value="Brew">Brew</option>
+            <option value="Aaron">Aaron</option>
+            <option value="Locke">Locke</option>
+        </select>
+</p>
+
+<p>
+    <lable>Stat Filters:</lable>
+
+    <lable>Hp:</lable>
+    <select @bind="hpMod">
+        <option value="0">X</option>
+        <option value="1">&lt;</option>
+        <option value="2">&gt;</option>
+        <option value="3">=</option>
+    </select>
+    <input type="search" @bind="hpFilter" @bind:event="oninput" style="width: 50px" />
+
+    <lable>Atk:</lable>
+    <select @bind="atkMod">
+        <option value="0">X</option>
+        <option value="1">&lt;</option>
+        <option value="2">&gt;</option>
+        <option value="3">=</option>
+    </select>
+    <input type="search" @bind="atkFilter" @bind:event="oninput" style="width: 50px" />
+
+    <lable>Def:</lable>
+    <select @bind="defMod">
+        <option value="0">X</option>
+        <option value="1">&lt;</option>
+        <option value="2">&gt;</option>
+        <option value="3">=</option>
+    </select>
+    <input type="search" @bind="defFilter" @bind:event="oninput" style="width: 50px" />
+
+    <lable>Spa:</lable>
+    <select @bind="spaMod">
+        <option value="0">X</option>
+        <option value="1">&lt;</option>
+        <option value="2">&gt;</option>
+        <option value="3">=</option>
+    </select>
+    <input type="search" @bind="spaFilter" @bind:event="oninput" style="width: 50px" />
+
+    <lable>Spd:</lable>
+    <select @bind="spdMod">
+        <option value="0">X</option>
+        <option value="1">&lt;</option>
+        <option value="2">&gt;</option>
+        <option value="3">=</option>
+    </select>
+    <input type="search" @bind="spdFilter" @bind:event="oninput" style="width: 50px" />
+
+    <lable>Spe:</lable>
+    <select @bind="speMod">
+        <option value="0">X</option>
+        <option value="1">&lt;</option>
+        <option value="2">&gt;</option>
+        <option value="3">=</option>
+    </select>
+    <input type="search" @bind="speFilter" @bind:event="oninput" style="width: 50px" />
+
+    <lable>Bst:</lable>
+    <select @bind="bstMod">
+        <option value="0">X</option>
+        <option value="1">&lt;</option>
+        <option value="2">&gt;</option>
+        <option value="3">=</option>
+    </select>
+    <input type="search" @bind="bstFilter" @bind:event="oninput" style="width: 50px" />
+</p>
+
+<p>
+    <input id="chkNormal" type="checkbox" @bind="showNormal"/>
+    <label>Normal</label>
+
+    <input id="chkFire" type="checkbox" @bind="showFire"  />
+    <label>Fire</label>
+
+    <input id="chkWater" type="checkbox" @bind="showWater"  />
+    <label>Water</label>
+
+    <input id="chkGrass" type="checkbox" @bind="showGrass"  />
+    <label>Grass</label>
+
+    <input id="chkElectric" type="checkbox" @bind="showElectric"  />
+    <label>Electric</label>
+
+    <input id="chkIce" type="checkbox" @bind="showIce"  />
+    <label>Ice</label>
+
+    <input id="chkFighting" type="checkbox" @bind="showFighting"  />
+    <label>Fighting</label>
+
+    <input id="chkPoison" type="checkbox" @bind="showPoison"  />
+    <label>Poison</label>
+
+    <input id="chkGround" type="checkbox" @bind="showGround"  />
+    <label>Ground</label>
+
+    <input id="chkFlying" type="checkbox" @bind="showFlying"  />
+    <label>Flying</label>
+
+    <input id="chkPsychic" type="checkbox" @bind="showPsychic"  />
+    <label>Psychic</label>
+
+    <input id="chkBug" type="checkbox" @bind="showBug"  />
+    <label>Bug</label>
+
+    <input id="chkRock" type="checkbox" @bind="showRock"  />
+    <label>Rock</label>
+
+    <input id="chkGhost" type="checkbox" @bind="showGhost"  />
+    <label>Ghost</label>
+
+    <input id="chkDark" type="checkbox" @bind="showDark"  />
+    <label>Dark</label>
+
+    <input id="chkDragon" type="checkbox" @bind="showDragon"  />
+    <label>Dragon</label>
+
+    <input id="chkSteel" type="checkbox" @bind="showSteel"  />
+    <label>Steel</label>
+
+    <input id="chkFairy" type="checkbox" @bind="showFairy"  />
+    <label>Fairy</label>
+</p>
+
+<p>
+    <input id ="chkStrict" type="checkbox" checked="@StrictToggle" @onchange="ChangeStrictState"/>
+    <label>Strict Toggle</label>
+
+    <input id="chkSelect" type="checkbox" checked="@SelectAll" @onchange="ChangeSelectState"/>
+    <label>Toggle All</label>
+</p>
+
+</body>
+</html>
+
+<div class="grid">
+    <QuickGrid Items="FilteredPokemon" Pagination="pagination" Theme="pokedex">
+        <PropertyColumn Property="pokedex => pokedex.DexNum" Title="#" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
+        <PropertyColumn Property="pokedex => pokedex.Hp" Sortable="true"/>
+        <PropertyColumn Property="pokedex => pokedex.Atk" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.Def" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.Spa" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.Spd" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.Spe" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.Bst" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.TypeA" Title="Type" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.TypeB" Title="Type" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.AbilityA" Title="Ability" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.AbilityB" Title="Ability" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.AbilityC" Title="Ability" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.Tier" Sortable="true" />
+        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true" />
+
+        <TemplateColumn Context="pokedex">
+            <AuthorizeView Policy="@UserPolicy.EDIT_PRODUCT">
+                <Authorized>
+                    <a href="@($"pokedex/edit?id={pokedex.Id}")">Edit</a>
+                </Authorized>
+            </AuthorizeView>
+        </TemplateColumn>
+    </QuickGrid>
+    <Paginator State="pagination" />
+</div>
+
+
+@code {
+             /* WIP
+
+             strict doesn't work with sorts
+             stat mods don't update sorts
+             strict doesn't update table
+             strict and select all should be buttons
+             table does not fit to screen
+                                                */
+
+    private PaginationState pagination = new PaginationState { ItemsPerPage = 100 };
+    private PokemonDraftContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+
+    string nameFilter = string.Empty;
+    string abilityFilter = string.Empty;
+    string tierFilter = string.Empty;
+    string trainerFilter = string.Empty;
+
+    int hpFilter;
+    string hpMod = string.Empty;
+    int atkFilter;
+    string atkMod = string.Empty;
+    int defFilter;
+    string defMod = string.Empty;
+    int spaFilter;
+    string spaMod = string.Empty;
+    int spdFilter;
+    string spdMod = string.Empty;
+    int speFilter;
+    string speMod = string.Empty;
+    int bstFilter;
+    string bstMod = string.Empty;
+
+    public bool showNormal = true;
+    bool showFire = true;
+    bool showWater = true;
+    bool showGrass = true;
+    bool showElectric = true;
+    bool showIce = true;
+    bool showFighting = true;
+    bool showPoison = true;
+    bool showGround = true;
+    bool showFlying = true;
+    bool showPsychic = true;
+    bool showBug = true;
+    bool showRock = true;
+    bool showGhost = true;
+    bool showDark = true;
+    bool showDragon = true;
+    bool showSteel = true;
+    bool showFairy = true;
+
+    bool StrictToggle = false;
+    bool SelectAll = true;
+
+    void ChangeStrictState(ChangeEventArgs e)
+    {
+        StrictToggle = !Convert.ToBoolean(e.Value);
+        StrictToggle = !StrictToggle;
+        if(StrictToggle){ToggleAll(false);}
+        else{ToggleAll(true);}
+        StateHasChanged();
+    }
+
+    void ChangeSelectState(ChangeEventArgs e)
+    {
+        SelectAll = !Convert.ToBoolean(e.Value);
+        SelectAll = !SelectAll;
+        if (SelectAll) { ToggleAll(true); }
+        else { ToggleAll(false); }
+        StateHasChanged();
+    }
+
+    void ToggleAll(Boolean toggle)
+    {
+        if(toggle)
+        {
+            showNormal = true;
+            showFire = true;
+            showWater = true;
+            showGrass = true;
+            showElectric = true;
+            showIce = true;
+            showFighting = true;
+            showPoison = true;
+            showGround = true;
+            showFlying = true;
+            showPsychic = true;
+            showBug = true;
+            showRock = true;
+            showGhost = true;
+            showDark = true;
+            showDragon = true;
+            showSteel = true;
+            showFairy = true;
+            SelectAll = true;
+        }
+        else
+        {
+            showNormal = false;
+            showFire = false;
+            showWater = false;
+            showGrass = false;
+            showElectric = false;
+            showIce = false;
+            showFighting = false;
+            showPoison = false;
+            showGround = false;
+            showFlying = false;
+            showPsychic = false;
+            showBug = false;
+            showRock = false;
+            showGhost = false;
+            showDark = false;
+            showDragon = false;
+            showSteel = false;
+            showFairy = false;
+            SelectAll = false;
+        }
+    }
+
+    private IQueryable<Pokedex> FilteredPokemon
+    {
+        get
+        {
+            var result = context.Pokedex.Where(x => x.Name!.Contains(nameFilter));
+            result = result.Where(x => x.AbilityA!.Contains(abilityFilter) || x.AbilityB!.Contains(abilityFilter) || 
+                x.AbilityC!.Contains(abilityFilter));
+            //result = result.Where(x => x.Tier == 1);
+            result = result.Where(x => x.Tier!.Contains(tierFilter));
+            result = result.Where(x => x.Trainer!.Contains(trainerFilter));
+
+            if(hpMod == "1")
+            {
+                result = result.Where(x => x.Hp! < hpFilter);
+            }
+            if (hpMod == "2")
+            {
+                result = result.Where(x => x.Hp! > hpFilter);
+            }
+            if (hpMod == "3")
+            {
+                result = result.Where(x => x.Hp!.Equals(hpFilter));
+            }
+
+            if (atkMod == "1")
+            {
+                result = result.Where(x => x.Atk! < atkFilter);
+            }
+            if (atkMod == "2")
+            {
+                result = result.Where(x => x.Atk! > atkFilter);
+            }
+            if (atkMod == "3")
+            {
+                result = result.Where(x => x.Atk!.Equals(atkFilter));
+            }
+
+            if (defMod == "1")
+            {
+                result = result.Where(x => x.Def! < defFilter);
+            }
+            if (defMod == "2")
+            {
+                result = result.Where(x => x.Def! > defFilter);
+            }
+            if (defMod == "3")
+            {
+                result = result.Where(x => x.Def!.Equals(defFilter));
+            }
+            
+            if (spaMod == "1")
+            {
+                result = result.Where(x => x.Spa! < spaFilter);
+            }
+            if (spaMod == "2")
+            {
+                result = result.Where(x => x.Spa! > spaFilter);
+            }
+            if (spaMod == "3")
+            {
+                result = result.Where(x => x.Spa!.Equals(spaFilter));
+            }
+
+            if (spdMod == "1")
+            {
+                result = result.Where(x => x.Spd! < spdFilter);
+            }
+            if (spdMod == "2")
+            {
+                result = result.Where(x => x.Spd! > spdFilter);
+            }
+            if (spdMod == "3")
+            {
+                result = result.Where(x => x.Spd!.Equals(spdFilter));
+            }
+
+            if (speMod == "1")
+            {
+                result = result.Where(x => x.Spe! < speFilter);
+            }
+            if (speMod == "2")
+            {
+                result = result.Where(x => x.Spe! > speFilter);
+            }
+            if (speMod == "3")
+            {
+                result = result.Where(x => x.Spe!.Equals(speFilter));
+            }
+
+            if (bstMod == "1")
+            {
+                result = result.Where(x => x.Bst! < bstFilter);
+            }
+            if (bstMod == "2")
+            {
+                result = result.Where(x => x.Bst! > bstFilter);
+            }
+            if (bstMod == "3")
+            {
+                result = result.Where(x => x.Bst!.Equals(bstFilter));
+            }
+
+            if(StrictToggle == true)
+            {
+                if (showNormal == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Normal") || x.TypeB!.Contains("Normal"));
+                }
+                if (showFire == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Fire") || x.TypeB!.Contains("Fire"));
+                }
+                if (showWater == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Water") || x.TypeB!.Contains("Water"));
+                }
+                if (showGrass == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Grass") || x.TypeB!.Contains("Grass"));
+                }
+                if (showElectric == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Electric") || x.TypeB!.Contains("Electric"));
+                }
+                if (showIce == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Ice") || x.TypeB!.Contains("Ice"));
+                }
+                if (showFighting == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Fighting") || x.TypeB!.Contains("Fighting"));
+                }
+                if (showPoison == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Poison") || x.TypeB!.Contains("Poison"));
+                }
+                if (showGround == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Ground") || x.TypeB!.Contains("Ground"));
+                }
+                if (showFlying == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Flying") || x.TypeB!.Contains("Flying"));
+                }
+                if (showPsychic == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Psychic") || x.TypeB!.Contains("Psychic"));
+                }
+                if (showBug == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Bug") || x.TypeB!.Contains("Bug"));
+                }
+                if (showRock == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Rock") || x.TypeB!.Contains("Rock"));
+                }
+                if (showGhost == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Ghost") || x.TypeB!.Contains("Ghost"));
+                }
+                if (showDark == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Dark") || x.TypeB!.Contains("Dark"));
+                }
+                if (showDragon == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Dragon") || x.TypeB!.Contains("Dragon"));
+                }
+                if (showSteel == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Steel") || x.TypeB!.Contains("Steel"));
+                }
+                if (showFairy == true)
+                {
+                    result = result.Where(x => x.TypeA!.Contains("Fairy") || x.TypeB!.Contains("Fairy"));
+                }
+                else
+                {
+                    //result = result.Where(x => x.TypeA!.Contains("asdasdasdas") || x.TypeB!.Contains("asdasdasdasd"));
+                }
+            }
+            else
+            {
+                if (showNormal == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Normal"));
+                    result = result.Where(x => !x.TypeB!.Contains("Normal"));
+                }
+                if (showFire == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Fire"));
+                    result = result.Where(x => !x.TypeB!.Contains("Fire"));
+                }
+                if (showWater == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Water"));
+                    result = result.Where(x => !x.TypeB!.Contains("Water"));
+                }
+                if (showGrass == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Grass"));
+                    result = result.Where(x => !x.TypeB!.Contains("Grass"));
+                }
+                if (showElectric == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Electric"));
+                    result = result.Where(x => !x.TypeB!.Contains("Electric"));
+                }
+                if (showIce == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Ice"));
+                    result = result.Where(x => !x.TypeB!.Contains("Ice"));
+                }
+                if (showFighting == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Fighting"));
+                    result = result.Where(x => !x.TypeB!.Contains("Fighting"));
+                }
+                if (showPoison == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Poison"));
+                    result = result.Where(x => !x.TypeB!.Contains("Poison"));
+                }
+                if (showGround == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Ground"));
+                    result = result.Where(x => !x.TypeB!.Contains("Ground"));
+                }
+                if (showFlying == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Flying"));
+                    result = result.Where(x => !x.TypeB!.Contains("Flying"));
+                }
+                if (showPsychic == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Psychic"));
+                    result = result.Where(x => !x.TypeB!.Contains("Psychic"));
+                }
+                if (showBug == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Bug"));
+                    result = result.Where(x => !x.TypeB!.Contains("Bug"));
+                }
+                if (showRock == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Rock"));
+                    result = result.Where(x => !x.TypeB!.Contains("Rock"));
+                }
+                if (showGhost == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Ghost"));
+                    result = result.Where(x => !x.TypeB!.Contains("Ghost"));
+                }
+                if (showDark == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Dark"));
+                    result = result.Where(x => !x.TypeB!.Contains("Dark"));
+                }
+                if (showDragon == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Dragon"));
+                    result = result.Where(x => !x.TypeB!.Contains("Dragon"));
+                }
+                if (showSteel == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Steel"));
+                    result = result.Where(x => !x.TypeB!.Contains("Steel"));
+                }
+                if (showFairy == false)
+                {
+                    result = result.Where(x => !x.TypeA!.Contains("Fairy"));
+                    result = result.Where(x => !x.TypeB!.Contains("Fairy"));
+                }
+            }  
+            return result;
+        }      
+    }
+}

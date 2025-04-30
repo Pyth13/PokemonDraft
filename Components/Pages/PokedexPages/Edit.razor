@@ -1,0 +1,169 @@
+﻿@page "/pokedex/edit"
+@using Microsoft.EntityFrameworkCore
+@using PokemonDraft.Models
+@using System.Diagnostics
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IDbContextFactory<PokemonDraft.Data.PokemonDraftContext> DbFactory
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize(Policy = UserPolicy.EDIT_PRODUCT)]
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Pokedex</h2>
+<hr />
+@if (Pokedex is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Pokedex" OnValidSubmit="UpdatePokedex" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="Pokedex.Id" value="@Pokedex.Id" />
+                <div class="mb-3">
+                    <label for="dexnum" class="form-label">DexNum:</label>
+                    <InputNumber id="dexnum" @bind-Value="Pokedex.DexNum" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.DexNum" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name:</label>
+                    <InputText id="name" @bind-Value="Pokedex.Name" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.Name" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="hp" class="form-label">Hp:</label>
+                    <InputNumber id="hp" @bind-Value="Pokedex.Hp" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.Hp" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="atk" class="form-label">Atk:</label>
+                    <InputNumber id="atk" @bind-Value="Pokedex.Atk" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.Atk" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="def" class="form-label">Def:</label>
+                    <InputNumber id="def" @bind-Value="Pokedex.Def" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.Def" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="spa" class="form-label">Spa:</label>
+                    <InputNumber id="spa" @bind-Value="Pokedex.Spa" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.Spa" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="spd" class="form-label">Spd:</label>
+                    <InputNumber id="spd" @bind-Value="Pokedex.Spd" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.Spd" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="spe" class="form-label">Spe:</label>
+                    <InputNumber id="spe" @bind-Value="Pokedex.Spe" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.Spe" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="bst" class="form-label">Bst:</label>
+                    <InputNumber id="bst" @bind-Value="Pokedex.Bst" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.Bst" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="typea" class="form-label">TypeA:</label>
+                    <InputText id="typea" @bind-Value="Pokedex.TypeA" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.TypeA" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="typeb" class="form-label">TypeB:</label>
+                    <InputText id="typeb" @bind-Value="Pokedex.TypeB" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.TypeB" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="abilitya" class="form-label">AbilityA:</label>
+                    <InputText id="abilitya" @bind-Value="Pokedex.AbilityA" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.AbilityA" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="abilityb" class="form-label">AbilityB:</label>
+                    <InputText id="abilityb" @bind-Value="Pokedex.AbilityB" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.AbilityB" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="abilityc" class="form-label">AbilityC:</label>
+                    <InputText id="abilityc" @bind-Value="Pokedex.AbilityC" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.AbilityC" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="tier" class="form-label">Tier:</label>
+                    <InputText id="tier" @bind-Value="Pokedex.Tier" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.Tier" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="trainer" class="form-label">Trainer:</label>
+                    <InputText id="trainer" @bind-Value="Pokedex.Trainer" class="form-control" />
+                    <ValidationMessage For="() => Pokedex.Trainer" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/pokedex">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Pokedex? Pokedex { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Pokedex ??= await context.Pokedex.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Pokedex is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdatePokedex()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Pokedex!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!PokedexExists(Pokedex!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/pokedex");
+    }
+
+    private bool PokedexExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Pokedex.Any(e => e.Id == id);
+    }
+}
