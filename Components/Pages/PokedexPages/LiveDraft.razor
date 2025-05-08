@@ -2,24 +2,34 @@
 @rendermode InteractiveServer
 @using System.Timers
 @using System.Globalization
-
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using PokemonDraft.Models
 @using PokemonDraft.Models.Entities
 @using PokemonDraft.Data
-
+@using Microsoft.AspNetCore.Authentication
+@implements IAsyncDisposable
 @inject IDbContextFactory<PokemonDraft.Data.PokemonDraftContext> DbFactory
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
 
-<h3>Draft Home</h3>
+<AuthorizeView>
+    <Authorized>
+        <h1>Logged in as <b>@context.User.Identity.Name</b></h1>
+    </Authorized>
+</AuthorizeView>
 
 @if (confirmPopup)
 {
     <div class="modal-overlay" @onclick="HideConfirm">
         <div class="modal-content" @onclick:stopPropagation="true">
             <h3>Confirm Window</h3>
-            <p>Sample Text</p>
-            <button class="pick-button" @onclick="HideConfirm">Confirm Selection</button>
+            <AuthorizeView>
+                <Authorized>
+                    <h1><b>@context.User.Identity.Name @message</b></h1>
+                    <button class="pick-button" @onclick="ConfirmChoice">Confirm Selection</button>
+                </Authorized>
+            </AuthorizeView>
+
             <button class="btn btn-secondary" @onclick="HideConfirm">Go Back</button>
         </div>
     </div>
@@ -51,8 +61,9 @@
         <br>Recent Picks<br />
 
     <div class="box">
-            <QuickGrid style="width:100%" Pagination="@pagination" Items="DraftFilter" Theme="draft">
-            <PropertyColumn Property="DraftStats => DraftStats.Pick" Sortable="true" />
+        <QuickGrid style="width:100%" Pagination="@pagination" Items="RecentPicks" Theme="draft" >
+            <PropertyColumn Property="DraftStats => DraftStats.Pick" Sortable="true" 
+                IsDefaultSortColumn InitialSortDirection="SortDirection.Descending"/>
             <PropertyColumn Property="DraftStats => DraftStats.Round" Sortable="true" />
             <PropertyColumn Property="DraftStats => DraftStats.Pokemon" Sortable="true" />
             <PropertyColumn Property="DraftStats => DraftStats.Owner" Sortable="true" />
@@ -60,61 +71,88 @@
             <TemplateColumn Context="roster">
             </TemplateColumn>
         </QuickGrid>
-        <Paginator State="@pagination" />
     </div>
+        <Paginator State="@pagination" />
 
     </div>
-    <div>upcoming picks
+    <div>
+        <h3>Upcoming Picks</h3>
         <div class="box">
-            <QuickGrid style="width:100%" Pagination="@pagination" Items="DraftFilter" Theme="draft">
+            <QuickGrid style="width:100%" Pagination="@pagination" Items="UpcomingPicks" Theme="draft">
+                <PropertyColumn Property="DraftStats => DraftStats.Pick" Sortable="true"
+                                IsDefaultSortColumn InitialSortDirection="SortDirection.Ascending" />
+                <PropertyColumn Property="DraftStats => DraftStats.Round" Sortable="true" />
                 <PropertyColumn Property="DraftStats => DraftStats.Owner" Sortable="true" />
                 <TemplateColumn Context="roster">
                 </TemplateColumn>
             </QuickGrid>
-            <Paginator State="@pagination" />
         </div>
+        <Paginator State="@pagination" />
     </div>
-    <div>picks remaining
+    <!--<div>picks remaining
         <br>Mega: <br /> X<br />
         <br>Tier 1 <br /> O X <br />
         <br>Tier 2 <br /> X X <br />
         <br>Tier 3 <br /> O O <br />
         <br>Tier 4 <br /> X X <br />
         <br>Tier 5 <br /> O O <br />
-    </div>
-    <div>Roster
+    </div> -->
+    <div>
+        <h3>Roster</h3>
+        <h4>Search Trainer:
+
+        <select @bind="trainerFilter">
+            <option value="Pyth">Pyth</option>
+            <option value="Rusty">Rusty</option>
+            <option value="Inuktitut">Inuktitut</option>
+            <option value="Delsere">Delsere</option>
+            <option value="Austin">Austin</option>
+            <option value="Tori">Tori</option>
+            <option value="ThatHalfAss">ThatHalfAss</option>
+            <option value="Bigbuff">Bigbuff</option>
+            <option value="Ceise">Ceise</option>
+            <option value="Orasyn">Orasyn</option>
+            <option value="Chax">Abby</option>
+            <option value="Kaboomie">Kaboomie</option>
+            <option value="Zuzu">Zuzu</option>
+            <option value="Brew">Brew</option>
+            <option value="Aaron">Aaron</option>
+            <option value="Locke">Locke</option>
+        </select>
+        </h4>
+
         <QuickGrid style = "width:100%" Items="RosterFilter" Theme="roster">
-            <PropertyColumn Property="roster => roster.Mega" Sortable="true"/>
+            <PropertyColumn Property="roster => roster.Mega" />
         <TemplateColumn Context="roster">
         </TemplateColumn>
         </QuickGrid>
         <QuickGrid style="width:100%" Items="RosterFilter" Theme="roster">
-            <PropertyColumn Property="roster => roster.TierOneA" Sortable="true" />
-            <PropertyColumn Property="roster => roster.TierOneB" Sortable="true" />
+            <PropertyColumn Property="roster => roster.TierOneA"  />
+            <PropertyColumn Property="roster => roster.TierOneB"  />
             <TemplateColumn Context="roster">
             </TemplateColumn>
         </QuickGrid>
         <QuickGrid style="width:100%" Items="RosterFilter" Theme="roster">
-            <PropertyColumn Property="roster => roster.TierTwoA" Sortable="true" />
-            <PropertyColumn Property="roster => roster.TierTwoB" Sortable="true" />
+            <PropertyColumn Property="roster => roster.TierTwoA"  />
+            <PropertyColumn Property="roster => roster.TierTwoB"  />
             <TemplateColumn Context="roster">
             </TemplateColumn>
         </QuickGrid>
         <QuickGrid style="width:100%" Items="RosterFilter" Theme="roster">
-            <PropertyColumn Property="roster => roster.TierThreeA" Sortable="true" />
-            <PropertyColumn Property="roster => roster.TierThreeB" Sortable="true" />
+            <PropertyColumn Property="roster => roster.TierThreeA"  />
+            <PropertyColumn Property="roster => roster.TierThreeB"  />
             <TemplateColumn Context="roster">
             </TemplateColumn>
         </QuickGrid>
         <QuickGrid style="width:100%" Items="RosterFilter" Theme="roster">
-            <PropertyColumn Property="roster => roster.TierFourA" Sortable="true" />
-            <PropertyColumn Property="roster => roster.TierFourB" Sortable="true" />
+            <PropertyColumn Property="roster => roster.TierFourA"  />
+            <PropertyColumn Property="roster => roster.TierFourB"  />
             <TemplateColumn Context="roster">
             </TemplateColumn>
         </QuickGrid>
         <QuickGrid style="width:100%" Items="RosterFilter" Theme="roster">
-            <PropertyColumn Property="roster => roster.TierFiveA" Sortable="true" />
-            <PropertyColumn Property="roster => roster.TierFiveB" Sortable="true" />
+            <PropertyColumn Property="roster => roster.TierFiveA"  />
+            <PropertyColumn Property="roster => roster.TierFiveB"  />
             <TemplateColumn Context="roster">
             </TemplateColumn>
         </QuickGrid>
@@ -124,7 +162,7 @@
 <div class="pick-box">
     <div class = "box">
         <div class="grid">
-        <h3>Banned</h3>
+        <p>Banned</p>
         <QuickGrid Items="TierFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <TemplateColumn Context="pokedex">
@@ -139,9 +177,9 @@
         <QuickGrid Items="MegaFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
-        <TemplateColumn Context="pokedex">
+        <TemplateColumn Title="Actions">
             <div class="pick-button">
-                <button type="submit" @onclick="PickClick" value="Mega" class="btn btn-primary">PICK</button> 
+                <button @onclick="@(() => PickClick(context))"> PICK </button> 
             </div>
         </TemplateColumn>
         </QuickGrid>
@@ -225,7 +263,7 @@
 
     <div class = "box">
         <div class="grid">
-        <h3>Untiered(Tier 5) <br /></h3>
+        <h3>Untiered(T5) <br /></h3>
         <QuickGrid Items="UntieredFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
@@ -241,21 +279,40 @@
 
 @code {
 
+    //owner id
+    // var result = context.Rosters.Where(x => x.team_owner_id == ownerid)
+    //reformat useraccount into owner
+
     private PokemonDraftContext context = default!;
 
     PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
 
+    string trainerFilter = string.Empty;
+    string message = string.Empty;
     private bool confirmPopup = false;
 
-    public void PickClick()
+    public void PickClick(Pokedex p)
     {
+        message = $" wants to draft {p.Name} as their {p.Tier}";
         confirmPopup = true;
     }
 
+    /*public void PickClick()
+        {
+        confirmPopup = true;
+    }*/
+
     private void HideConfirm()
     {
+        confirmPopup = false;
+    }
+
+    private void ConfirmChoice()
+    {
+        //modify table here
+        //var roster = DbFactory.CreateDbContext();
         confirmPopup = false;
     }
 
@@ -346,29 +403,56 @@
         }      
     }
 
+
     private IQueryable<Roster> RosterFilter
     {
-       get
-       {
-           context = DbFactory.CreateDbContext();
-           var result = context.Rosters.Where(x => x.TeamName!.Contains("Tormenting Togekiss"));
-           //var result = context.Rosters.Where(x => x.TeamOwner!.Contains("Pyth"));
-           //var testOne = context.UserAccounts.Where(x => x.Team!.Equals(1));
-           return result;
-       }
+        get
+        {
+            //does this break the way to find current user?
+            if(trainerFilter == "")
+            {
+                var authstate = GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+                var user = authstate.Result.User;
+                var name = user.Identity.Name;
+                context = DbFactory.CreateDbContext();
+                //var trainerId = context.Trainer.Where(x => x.TrainerName == name).First();
+                var result = context.Rosters.Where(x => x.TeamOwner == name);
+                //var result = context.Rosters.Where(x => x.TeamName!.Contains("Tormenting Togekiss"));
+                return result;
+            }
+            else
+            {
+                var authstate = GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+                var user = authstate.Result.User;
+                var name = user.Identity.Name;
+                context = DbFactory.CreateDbContext();
+                //var trainerId = context.Trainer.Where(x => x.TrainerName == name).First();
+                var result = context.Rosters.Where(x => x.TeamOwner == trainerFilter);
+                //var result = context.Rosters.Where(x => x.TeamName!.Contains("Tormenting Togekiss"));
+                return result;
+            }
+        }
     }
 
-    /*private IQueryable<Roster> RosterFilter
+    private IQueryable<DraftStats> RecentPicks
     {
         get
         {
             context = DbFactory.CreateDbContext();
-            var result = context.Rosters.Where(x => x.TeamName!.Contains("Tormenting Togekiss"));
-            //var result = context.Rosters.Where(x => x.TeamOwner!.Contains("Pyth"));
-            //var testOne = context.UserAccounts.Where(x => x.Team!.Equals(1));
-            return result; 
-        }      
-    }*/
+            var result = context.DraftStats;
+            return result;
+        }
+    }
+
+    private IQueryable<DraftStats> UpcomingPicks
+    {
+        get
+        {
+            context = DbFactory.CreateDbContext();
+            var result = context.DraftStats.Where(x => x.Pokemon == null);
+            return result;
+        }
+    }
 
     private IQueryable<DraftStats> DraftFilter
     {

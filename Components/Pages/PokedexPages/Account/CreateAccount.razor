@@ -50,7 +50,7 @@
 
     public string? errorMessage;
 
-    private UserAccount UserAccount = new UserAccount();
+    private Trainer Trainer = new Trainer();
 
     public async Task AccountCreation()
     {
@@ -61,13 +61,13 @@
             return;
         }
 
-        var hashedPassword = BCrypt.EnhancedHashPassword(Model.Password, 13);
-        Model.Password = hashedPassword;
+        //var hashedPassword = BCrypt.EnhancedHashPassword(Model.Password, 13);
+        //Model.Password = hashedPassword;
 
-        UserAccount.UserName = Model.UserName;
-        UserAccount.Password = Model.Password;
+        Trainer.TrainerName = Model.UserName;
+        Trainer.Password = Model.Password;
 
-        dbContext.UserAccounts.Add(UserAccount);
+        dbContext.Trainer.Add(Trainer);
         await dbContext.SaveChangesAsync();
 
         Model.Password = "";

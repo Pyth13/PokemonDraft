@@ -16,11 +16,11 @@ namespace PokemonDraft.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            var demoUserAccounts = new UserAccount[]
+            var demoUserAccounts = new Trainer[]
             {
-                new() {Id = 1, UserName = "guest", Password = "guest1"},
-                new() {Id = 2, UserName = "player", Password = "player1"},
-                new() {Id = 3, UserName = "admin", Password = "admin1"}
+                new() {Id = 1, TrainerName = "guest", Password = "guest1"},
+                new() {Id = 2, TrainerName = "player", Password = "player1"},
+                new() {Id = 3, TrainerName = "admin", Password = "admin1"}
             };
             modelBuilder.Entity<UserAccount>().HasData(demoUserAccounts);
 
@@ -67,5 +67,6 @@ namespace PokemonDraft.Data
         public DbSet<PokemonStats> PokemonStats { get; set; }
         public DbSet<TradeStats> TradeStats { get; set; }
         public DbSet<DraftStats> DraftStats { get; set; }
+        public DbSet<Trainer> Trainer {  get; set; }
     }
 }

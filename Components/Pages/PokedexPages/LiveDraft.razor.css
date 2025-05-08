@@ -40,8 +40,8 @@
         border-radius: 1px;
         background-color: rgb(96 139 168 / 0.2);
         padding: 0.1em;
-        min-width: 25%;
-        max-width: 30%;
+        min-width: 33%;
+        max-width: 50%;
         overflow-x: scroll;
     }
 
@@ -55,7 +55,7 @@
 }
 
     .pick-button button {
-        padding: 0.1rem 0.1rem;
+        padding: 0.05rem 0.05rem;
     }
 
         .pick-button button:active {

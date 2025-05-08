@@ -60,13 +60,14 @@
             return;
         }
 
-        var userAccount = dbContext.UserAccounts.Where(x => x.UserName == Model.UserName).FirstOrDefault();
+        var userAccount = dbContext.Trainer.Where(x => x.TrainerName == Model.UserName).FirstOrDefault();
 
-        if (userAccount is null || !BCrypt.EnhancedVerify(Model.Password, userAccount.Password))
+        /*if (userAccount is null || !BCrypt.EnhancedVerify(Model.Password, userAccount.Password))
             {
             errorMessage = "Invalid username or password";
             return;
-        }
+        }*/
+
         /*if (BCrypt.EnhancedVerify(Model.Password, userAccount.Password))
         {
             errorMessage = "hash verified";
