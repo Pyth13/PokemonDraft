@@ -12,7 +12,7 @@ namespace PokemonDraft.Data
     {
         public DbSet<PokemonDraft.Models.Pokedex> Pokedex { get; set; } = default!;
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        /*protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
@@ -58,7 +58,7 @@ namespace PokemonDraft.Data
             };
             //modelBuilder.Entity<Roster>().HasData(demoRoster);
             
-        }
+        }*/
 
         //this might be fucked, merge with Pokempublic DbSet<Product> Products { get; set; }
         public DbSet<UserAccount> UserAccounts { get; set; }

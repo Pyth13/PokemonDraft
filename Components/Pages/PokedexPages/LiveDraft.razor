@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @using System.Timers
 @using System.Globalization
+@using Microsoft.Data.SqlClient
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using PokemonDraft.Models
@@ -11,6 +12,7 @@
 @implements IAsyncDisposable
 @inject IDbContextFactory<PokemonDraft.Data.PokemonDraftContext> DbFactory
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject NavigationManager NavigationManager
 
 <AuthorizeView>
     <Authorized>
@@ -26,6 +28,7 @@
             <AuthorizeView>
                 <Authorized>
                     <h1><b>@context.User.Identity.Name @message</b></h1>
+                    @* <button class="pick-button" @onclick="ConfirmChoice">Confirm Selection</button> *@
                     <button class="pick-button" @onclick="ConfirmChoice">Confirm Selection</button>
                 </Authorized>
             </AuthorizeView>
@@ -295,8 +298,47 @@
 
     public void PickClick(Pokedex p)
     {
-        message = $" wants to draft {p.Name} as their {p.Tier}";
-        confirmPopup = true;
+
+
+        var roster = DbFactory.CreateDbContext();
+
+        using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
+        {
+            cnn.Open();
+            using (var cmd = cnn.CreateCommand())
+            {
+                var authstate = GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+                var user = authstate.Result.User;
+                var trainer = user.Identity.Name;
+                var pokemon = p.Name;
+
+                //finds trainerId of logged in user
+                cmd.CommandText = @"SELECT Id FROM Trainer_Live WHERE team_owner = @Trainer";
+                cmd.Parameters.AddWithValue("@Trainer", trainer);
+                var trainerId = Convert.ToInt32(cmd.ExecuteScalar());
+
+                message = "{trainer} wants to draft #{trainerId} {p.Name} as their {p.Tier}";
+
+                //cmd.CommandText = ""
+
+                cmd.CommandText = "UPDATE Pokedex_Live SET Trainer = @TrainerId WHERE Name = @Pokemon";
+                cmd.Parameters.AddWithValue("@TrainerId", trainerId);
+                cmd.Parameters.AddWithValue("@Pokemon", pokemon);
+                cmd.ExecuteNonQuery();
+
+                // cmd.CommandText = "UPDATE Pokedex_Live SET Trainer = 17 WHERE Name = 'Sableye'";
+                // cmd.ExecuteNonQuery();
+
+                // cmd.CommandText = "UPDATE Rosters_Live SET mega = 'Pinsir' WHERE team_owner = 'Pyth'";
+                // //context = DbFactory.CreateDbContext();
+                // cmd.ExecuteNonQuery();
+
+
+
+                
+            }
+        }
+        //confirmPopup = true;
     }
 
     /*public void PickClick()
@@ -311,8 +353,23 @@
 
     private void ConfirmChoice()
     {
-        //modify table here
-        //var roster = DbFactory.CreateDbContext();
+        var roster = DbFactory.CreateDbContext();
+
+        using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
+        {
+            cnn.Open();
+            using (var cmd = cnn.CreateCommand())
+            {
+                //cmd.CommandText = "UPDATE Rosters SET TierName = 'TestError' WHERE ID = 8";
+                //cmd.CommandText = "UPDATE Rosters SET mega = 'Pinsir' WHERE team_owner = 'Pyth'";
+                context = DbFactory.CreateDbContext();
+
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        //message = $" wants to draft {p.Name} as their {p.Tier}";
+
         confirmPopup = false;
     }
 

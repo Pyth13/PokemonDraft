@@ -60,7 +60,8 @@
             return;
         }
 
-        var userAccount = dbContext.Trainer.Where(x => x.TrainerName == Model.UserName).FirstOrDefault();
+        //var userAccount = dbContext.Trainer.Where(x => x.TrainerName == Model.UserName).FirstOrDefault();
+        var userAccount = dbContext.Pokedex.Where(x => x.Trainer == Model.UserName).FirstOrDefault();
 
         /*if (userAccount is null || !BCrypt.EnhancedVerify(Model.Password, userAccount.Password))
             {

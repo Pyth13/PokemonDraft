@@ -15,9 +15,9 @@ public class Trainer
     [MaxLength(50)]
     public string? TrainerName { get; set; }
 
-    [Column("RosterId")]
-    [MaxLength(500)]
-    public int RosterId { get; set; }
+    //[Column("RosterId")]
+    //[MaxLength(500)]
+    //public int RosterId { get; set; }
 
     [Column("Password")]
     [MaxLength(50)]
