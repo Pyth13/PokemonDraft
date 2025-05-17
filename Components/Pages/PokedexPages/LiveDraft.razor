@@ -16,7 +16,7 @@
 
 <AuthorizeView>
     <Authorized>
-        <h1>Logged in as <b>@context.User.Identity.Name</b></h1>
+        <h1>Logged in as <b>@context.User.Identity!.Name</b></h1>
     </Authorized>
 </AuthorizeView>
 
@@ -92,14 +92,6 @@
         </div>
         <Paginator State="@pagination" />
     </div>
-    <!--<div>picks remaining
-        <br>Mega: <br /> X<br />
-        <br>Tier 1 <br /> O X <br />
-        <br>Tier 2 <br /> X X <br />
-        <br>Tier 3 <br /> O O <br />
-        <br>Tier 4 <br /> X X <br />
-        <br>Tier 5 <br /> O O <br />
-    </div> -->
     <div>
         <h3>Roster</h3>
         <h4>Search Trainer:
@@ -180,7 +172,7 @@
         <QuickGrid Items="MegaFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
-        <TemplateColumn Title="Actions">
+        <TemplateColumn>
             <div class="pick-button">
                 <button @onclick="@(() => PickClick(context))"> PICK </button> 
             </div>
@@ -195,9 +187,9 @@
         <QuickGrid Items="TierOneFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
-        <TemplateColumn Context="pokedex">
+        <TemplateColumn>
             <div class="pick-button">
-                <button type="submit" class="btn btn-primary">PICK</button> 
+                <button @onclick="@(() => PickClick(context))"> PICK </button>
             </div>
         </TemplateColumn>
         </QuickGrid>
@@ -210,9 +202,9 @@
         <QuickGrid Items="TierTwoFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
-        <TemplateColumn Context="pokedex">
+        <TemplateColumn>
             <div class="pick-button">
-                <button type="submit" class="btn btn-primary">PICK</button> 
+                <button @onclick="@(() => PickClick(context))"> PICK </button>
             </div>
         </TemplateColumn>
         </QuickGrid>
@@ -225,9 +217,9 @@
         <QuickGrid Items="TierThreeFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
-        <TemplateColumn Context="pokedex">
+        <TemplateColumn>
             <div class="pick-button">
-                <button type="submit" class="btn btn-primary">PICK</button> 
+                <button @onclick="@(() => PickClick(context))"> PICK </button>
             </div>
         </TemplateColumn>
         </QuickGrid>
@@ -240,9 +232,9 @@
         <QuickGrid Items="TierFourFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
-        <TemplateColumn Context="pokedex">
+        <TemplateColumn>
             <div class="pick-button">
-                <button type="submit" class="btn btn-primary">PICK</button> 
+                <button @onclick="@(() => PickClick(context))"> PICK </button>
             </div>
         </TemplateColumn>
         </QuickGrid>
@@ -255,9 +247,9 @@
         <QuickGrid Items="TierFiveFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
-        <TemplateColumn Context="pokedex">
+        <TemplateColumn>
             <div class="pick-button">
-                <button type="submit" class="btn btn-primary">PICK</button> 
+                <button @onclick="@(() => PickClick(context))"> PICK </button>
             </div>
         </TemplateColumn>
         </QuickGrid>
@@ -270,9 +262,9 @@
         <QuickGrid Items="UntieredFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
-        <TemplateColumn Context="pokedex">
+        <TemplateColumn>
             <div class="pick-button">
-                <button type="submit" class="btn btn-primary">PICK</button> 
+                <button @onclick="@(() => PickClick(context))"> PICK </button>
             </div>
         </TemplateColumn>
         </QuickGrid>
@@ -281,11 +273,6 @@
 </div>
 
 @code {
-
-    //owner id
-    // var result = context.Rosters.Where(x => x.team_owner_id == ownerid)
-    //reformat useraccount into owner
-
     private PokemonDraftContext context = default!;
 
     PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
@@ -298,8 +285,10 @@
 
     public void PickClick(Pokedex p)
     {
-
-
+        //!!function to remove old pokemon from roster??? maybe for trades? likely uncessary for now!!
+        //!!would like this to have a confirmation window!!
+        //!!!check to see if user is allowed to pick that tier, should be handled by disabling button!!!
+        //!!!user auth seems to NOT FUCKING WORK atm!!!
         var roster = DbFactory.CreateDbContext();
 
         using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
@@ -309,42 +298,129 @@
             {
                 var authstate = GetAuthenticationStateAsync.GetAuthenticationStateAsync();
                 var user = authstate.Result.User;
-                var trainer = user.Identity.Name;
+                var trainer = user.Identity!.Name;
                 var pokemon = p.Name;
 
                 //finds trainerId of logged in user
                 cmd.CommandText = @"SELECT Id FROM Trainer_Live WHERE team_owner = @Trainer";
                 cmd.Parameters.AddWithValue("@Trainer", trainer);
                 var trainerId = Convert.ToInt32(cmd.ExecuteScalar());
+                cmd.ExecuteNonQuery();
 
                 message = "{trainer} wants to draft #{trainerId} {p.Name} as their {p.Tier}";
 
-                //cmd.CommandText = ""
-
+                //sets pokedex entry to new trainer
                 cmd.CommandText = "UPDATE Pokedex_Live SET Trainer = @TrainerId WHERE Name = @Pokemon";
                 cmd.Parameters.AddWithValue("@TrainerId", trainerId);
                 cmd.Parameters.AddWithValue("@Pokemon", pokemon);
                 cmd.ExecuteNonQuery();
 
-                // cmd.CommandText = "UPDATE Pokedex_Live SET Trainer = 17 WHERE Name = 'Sableye'";
-                // cmd.ExecuteNonQuery();
-
-                // cmd.CommandText = "UPDATE Rosters_Live SET mega = 'Pinsir' WHERE team_owner = 'Pyth'";
-                // //context = DbFactory.CreateDbContext();
-                // cmd.ExecuteNonQuery();
-
-
-
-                
+                //sets roster to new pokemon !!should probably be handled by views!!
+                if(p.Tier!.Equals("Mega"))
+                {
+                    cmd.CommandText = "UPDATE Rosters_Live SET mega = @Pokemon WHERE owner_id = @TrainerId";
+                    cmd.ExecuteNonQuery();
+                }
+                if(p.Tier!.Equals("One"))
+                {
+                    //check to see if this is the first or second pick of this tier
+                    cmd.CommandText = @"SELECT tier_one_a FROM Rosters_Live WHERE owner_id = @TrainerId";                 
+                    var rosterCheck = cmd.ExecuteScalar() as string;
+                    if (rosterCheck == null)
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET tier_one_a = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET tier_one_b = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                if (p.Tier!.Equals("Two"))
+                {
+                    //check to see if this is the first or second pick of this tier
+                    cmd.CommandText = @"SELECT tier_two_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var rosterCheck = cmd.ExecuteScalar() as string;
+                    if (rosterCheck == null)
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET tier_two_a = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET tier_two_b = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                if (p.Tier!.Equals("Three"))
+                {
+                    //check to see if this is the first or second pick of this tier
+                    cmd.CommandText = @"SELECT tier_three_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var rosterCheck = cmd.ExecuteScalar() as string;
+                    if (rosterCheck == null)
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET tier_three_a = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET tier_three_b = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                if (p.Tier!.Equals("Four"))
+                {
+                    //check to see if this is the first or second pick of this tier
+                    cmd.CommandText = @"SELECT tier_four_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var rosterCheck = cmd.ExecuteScalar() as string;
+                    if (rosterCheck == null)
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET tier_four_a = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET tier_four_b = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                if (p.Tier!.Equals("Five"))
+                {
+                    //check to see if this is the first or second pick of this tier
+                    cmd.CommandText = @"SELECT tier_four_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var rosterCheck = cmd.ExecuteScalar() as string;
+                    if (rosterCheck == null)
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET tier_five_a = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET tier_five_b = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                if (p.Tier!.Equals("Six"))
+                {
+                    //check to see if this is the first or second pick of this tier
+                    cmd.CommandText = @"SELECT tier_five_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var rosterCheck = cmd.ExecuteScalar() as string;
+                    if (rosterCheck == null)
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET tier_five_a = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET tier_five_b = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                } 
             }
         }
         //confirmPopup = true;
     }
-
-    /*public void PickClick()
-        {
-        confirmPopup = true;
-    }*/
 
     private void HideConfirm()
     {

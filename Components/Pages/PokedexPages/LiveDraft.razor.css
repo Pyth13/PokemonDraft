@@ -60,7 +60,7 @@
 
         .pick-button button:active {
             background: #a7c1ff !important;
-            color: white;
+            color: cornflowerblue;
             transform: scale(0.95) translateY(-0.15rem);
             transition-duration: 0.05s;
         }

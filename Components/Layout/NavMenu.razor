@@ -13,20 +13,20 @@
             <NavLink class="nav-link" href="Pokedex">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Pokedex
             </NavLink>
-            <AuthorizeView Policy="@UserPolicy.VIEW_PRODUCT">
-                <Authorized>
+            @* <AuthorizeView Policy="@UserPolicy.VIEW_PRODUCT">
+                <Authorized> *@
                     <NavLink class="nav-link" href="DraftSheet">
                         <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Draft Sheet
                     </NavLink>
-                </Authorized>
+                @* </Authorized>
             </AuthorizeView>     
-            
-                <Authorized>
+            <AuthorizeView Policy="@UserPolicy.VIEW_PRODUCT">
+                <Authorized> *@
                     <NavLink class="nav-link" href="LiveDraft">
                         <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Draft Home
                     </NavLink>
-                </Authorized>
-            
+                @* </Authorized>
+            </AuthorizeView> *@
             <AuthorizeView>
                 <Authorized>
                     <NavLink class="nav-link" href="Logout">
