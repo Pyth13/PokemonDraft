@@ -9,14 +9,23 @@
 @using PokemonDraft.Models.Entities
 @using PokemonDraft.Data
 @using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Components.Rendering
 @implements IAsyncDisposable
 @inject IDbContextFactory<PokemonDraft.Data.PokemonDraftContext> DbFactory
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
 @inject NavigationManager NavigationManager
 
-<AuthorizeView>
+<base href="~/" />
+
+<AuthorizeView Context="authContext">
     <Authorized>
-        <h1>Logged in as <b>@context.User.Identity!.Name</b></h1>
+        <h1>Logged in as <b>@authContext.User.Identity!.Name</b></h1>
+
+        @if(@authContext.User.Identity.Name == "Pyth")
+        {
+            <h1> next pick is @nextPick</h1>
+        }
+
     </Authorized>
 </AuthorizeView>
 
@@ -173,9 +182,16 @@
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
         <TemplateColumn>
-            <div class="pick-button">
-                <button @onclick="@(() => PickClick(context))"> PICK </button> 
-            </div>
+        <AuthorizeView Context = "authContext">
+            <Authorized>
+                @if(@authContext.User.Identity!.Name == nextPick)
+                    {
+                        <div class="pick-button">
+                            <button @onclick="@(() => PickClick(context))"> PICK </button>
+                        </div>
+                    }         
+            </Authorized>
+        </AuthorizeView>
         </TemplateColumn>
         </QuickGrid>
         </div>
@@ -275,6 +291,9 @@
 @code {
     private PokemonDraftContext context = default!;
 
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
     PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
@@ -283,12 +302,57 @@
     string message = string.Empty;
     private bool confirmPopup = false;
 
+    private string nextPick = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        FindNextPick();
+        await base.OnInitializedAsync();
+    }
+
+    public void FindNextPick()
+    {
+        var roster = DbFactory.CreateDbContext();
+
+        using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
+        {
+            cnn.Open();
+            using (var cmd = cnn.CreateCommand())
+            {
+                var authstate = GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+                var user = authstate.Result.User;
+
+                if (user.Identity!.IsAuthenticated)
+                {
+                    cmd.CommandText = @"SELECT Owner FROM DraftStats_Live WHERE Pokemon IS NULL";
+                    int trainerId = Convert.ToInt32(cmd.ExecuteScalar());
+                    cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = @"SELECT team_owner FROM Trainer_Live WHERE Id = @TrainerId";
+                    cmd.Parameters.AddWithValue("@TrainerId", trainerId);
+                    var localPick = cmd.ExecuteScalar() as string;
+                    cmd.ExecuteNonQuery();
+
+                    nextPick = localPick!;
+                }
+                else
+                {
+                    nextPick = "no user logged in";
+                }
+                //nextpick might be not resetting?               
+            }
+        }
+    }
+
     public void PickClick(Pokedex p)
     {
         //!!function to remove old pokemon from roster??? maybe for trades? likely uncessary for now!!
         //!!would like this to have a confirmation window!!
         //!!!check to see if user is allowed to pick that tier, should be handled by disabling button!!!
-        //!!!user auth seems to NOT FUCKING WORK atm!!!
+        //!!!user auth seems to NOT FUCKING WORK atm!!! ?doesn't matter?
+        //!!!check for dup names!!!
+        //!!!check name for active player, ditch auth
+        //!!!hash / salt pw
         var roster = DbFactory.CreateDbContext();
 
         using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))

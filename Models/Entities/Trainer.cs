@@ -11,7 +11,7 @@ public class Trainer
     [Column("id")]
     public int Id { get; set; }
 
-    [Column("TrainerName")]
+    [Column("team_owner")]
     [MaxLength(50)]
     public string? TrainerName { get; set; }
 

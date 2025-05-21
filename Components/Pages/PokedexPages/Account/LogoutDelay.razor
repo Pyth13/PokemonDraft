@@ -1,0 +1,30 @@
+﻿@page "/logoutDelay"
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Http.Extensions
+@inject NavigationManager navigationManager
+
+<div class="row">
+    <div class="text-center mt-2">
+        <span class="text-danger fw-bolder">You will be logged out in 5 seconds.</span>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        if (HttpContext!.User.Identity!.IsAuthenticated)
+        {
+            await HttpContext.SignOutAsync();
+            navigationManager.NavigateTo("/login", forceLoad: true);
+        }
+        else
+        {
+            navigationManager.NavigateTo("/login", true);
+        }
+    }
+}

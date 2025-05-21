@@ -1,24 +1,41 @@
 ﻿@page "/logout"
+@rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Http.Extensions
+@using Microsoft.AspNetCore.Identity
+@using System.Web
 @inject NavigationManager navigationManager
 
 <div class="row">
-    <div class="text-center mt-2">
-        <span class="text-danger fw-bolder">You are now logged out</span>
+    <div class="col-lg-4 offset-lg-4 pt-4 pb-4 border">
+        <div class="mb-3 d-grid gap-2">
+            <button @onclick="LogoutTest">Logout</button>
+        </div>
     </div>
 </div>
 
 @code {
-    [CascadingParameter]
-    public HttpContext? HttpContext { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        if (HttpContext.User.Identity.IsAuthenticated)
-        {
-            await HttpContext.SignOutAsync();
-            navigationManager.NavigateTo("/logout", true);
-        }
+    
+    private void LogoutTest()
+    {   
+            navigationManager.NavigateTo("/logoutDelay", forceLoad: true);   
     }
+
+    // [CascadingParameter]
+    // public HttpContext? HttpContext { get; set; }
+
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     await base.OnInitializedAsync();
+    //     if (HttpContext!.User.Identity!.IsAuthenticated)
+    //     {
+    //         await HttpContext.SignOutAsync();
+    //         navigationManager.NavigateTo("/login", forceLoad: true);          
+    //     }
+    //     else
+    //     {
+    //         //navigationManager.NavigateTo("/logoutDelay", true);
+    //     }
+    // }
 }

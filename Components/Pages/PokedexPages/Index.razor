@@ -8,6 +8,7 @@
 @using PokemonDraft.Data
 @implements IAsyncDisposable
 @inject IDbContextFactory<PokemonDraft.Data.PokemonDraftContext> DbFactory
+
 <!DOCTYPE html>
 
 <html>
@@ -222,9 +223,12 @@
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true" />
 
         <TemplateColumn Context="pokedex">
-            <AuthorizeView Policy="@UserPolicy.EDIT_PRODUCT">
+            <AuthorizeView>
                 <Authorized>
-                    <a href="@($"pokedex/edit?id={pokedex.Id}")">Edit</a>
+                    @if (@context.User.Identity.Name == "Pyth")
+                    {
+                        <a href="@($"pokedex/edit?id={pokedex.Id}")">Edit</a>
+                    } 
                 </Authorized>
             </AuthorizeView>
         </TemplateColumn>
