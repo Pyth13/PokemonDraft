@@ -13,18 +13,15 @@
 @implements IAsyncDisposable
 @inject IDbContextFactory<PokemonDraft.Data.PokemonDraftContext> DbFactory
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
-@inject NavigationManager NavigationManager
+@inject NavigationManager navigationManager
 
 <base href="~/" />
 
 <AuthorizeView Context="authContext">
     <Authorized>
         <h1>Logged in as <b>@authContext.User.Identity!.Name</b></h1>
-
-        @if(@authContext.User.Identity.Name == "Pyth")
-        {
-            <h1> next pick is @nextPick</h1>
-        }
+        <h1> next pick is @nextPick</h1>
+        
 
     </Authorized>
 </AuthorizeView>
@@ -187,7 +184,7 @@
                 @if(@authContext.User.Identity!.Name == nextPick)
                     {
                         <div class="pick-button">
-                            <button @onclick="@(() => PickClick(context))"> PICK </button>
+                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
                         </div>
                     }         
             </Authorized>
@@ -204,9 +201,16 @@
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
         <TemplateColumn>
-            <div class="pick-button">
-                <button @onclick="@(() => PickClick(context))"> PICK </button>
-            </div>
+            <AuthorizeView Context="authContext">
+                <Authorized>
+                    @if (@authContext.User.Identity!.Name == nextPick)
+                    {
+                        <div class="pick-button">
+                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                        </div>
+                    }
+                </Authorized>
+            </AuthorizeView>
         </TemplateColumn>
         </QuickGrid>
         </div>
@@ -219,9 +223,16 @@
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
         <TemplateColumn>
-            <div class="pick-button">
-                <button @onclick="@(() => PickClick(context))"> PICK </button>
-            </div>
+            <AuthorizeView Context="authContext">
+                <Authorized>
+                    @if (@authContext.User.Identity!.Name == nextPick)
+                    {
+                        <div class="pick-button">
+                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                        </div>
+                    }
+                </Authorized>
+            </AuthorizeView>
         </TemplateColumn>
         </QuickGrid>
         </div>
@@ -234,9 +245,16 @@
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
         <TemplateColumn>
-            <div class="pick-button">
-                <button @onclick="@(() => PickClick(context))"> PICK </button>
-            </div>
+            <AuthorizeView Context="authContext">
+                <Authorized>
+                    @if (@authContext.User.Identity!.Name == nextPick)
+                    {
+                        <div class="pick-button">
+                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                        </div>
+                    }
+                </Authorized>
+            </AuthorizeView>
         </TemplateColumn>
         </QuickGrid>
         </div>
@@ -249,9 +267,16 @@
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
         <TemplateColumn>
-            <div class="pick-button">
-                <button @onclick="@(() => PickClick(context))"> PICK </button>
-            </div>
+            <AuthorizeView Context="authContext">
+                <Authorized>
+                    @if (@authContext.User.Identity!.Name == nextPick)
+                    {
+                        <div class="pick-button">
+                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                        </div>
+                    }
+                </Authorized>
+            </AuthorizeView>
         </TemplateColumn>
         </QuickGrid>
         </div>
@@ -264,9 +289,16 @@
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
         <TemplateColumn>
-            <div class="pick-button">
-                <button @onclick="@(() => PickClick(context))"> PICK </button>
-            </div>
+            <AuthorizeView Context="authContext">
+                <Authorized>
+                    @if (@authContext.User.Identity!.Name == nextPick)
+                    {
+                        <div class="pick-button">
+                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                        </div>
+                    }
+                </Authorized>
+            </AuthorizeView>
         </TemplateColumn>
         </QuickGrid>
         </div>
@@ -279,9 +311,16 @@
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
         <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
         <TemplateColumn>
-            <div class="pick-button">
-                <button @onclick="@(() => PickClick(context))"> PICK </button>
-            </div>
+            <AuthorizeView Context="authContext">
+                <Authorized>
+                    @if (@authContext.User.Identity!.Name == nextPick)
+                    {
+                        <div class="pick-button">
+                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                        </div>
+                    }
+                </Authorized>
+            </AuthorizeView>
         </TemplateColumn>
         </QuickGrid>
         </div>
@@ -301,13 +340,37 @@
     string trainerFilter = string.Empty;
     string message = string.Empty;
     private bool confirmPopup = false;
+    private bool isTaskRunning = false;
+    private int pick = 0;
+    private int round = 0;
 
     private string nextPick = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         FindNextPick();
+        GetPickAndRound();
         await base.OnInitializedAsync();
+    }
+
+    public void GetPickAndRound()
+    {
+        var roster = DbFactory.CreateDbContext();
+
+        using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
+        {
+            cnn.Open();
+            using (var cmd = cnn.CreateCommand())
+            {
+                cmd.CommandText = @"SELECT TOP 1 Pick FROM DraftStats_Live WHERE Pokemon IS NULL";
+                pick = Convert.ToInt32(cmd.ExecuteScalar());
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = @"SELECT TOP 1 Round FROM DraftStats_Live WHERE Pokemon IS NULL";
+                round = Convert.ToInt32(cmd.ExecuteScalar());
+                cmd.ExecuteNonQuery();
+            }
+        }
     }
 
     public void FindNextPick()
@@ -349,10 +412,12 @@
         //!!function to remove old pokemon from roster??? maybe for trades? likely uncessary for now!!
         //!!would like this to have a confirmation window!!
         //!!!check to see if user is allowed to pick that tier, should be handled by disabling button!!!
-        //!!!user auth seems to NOT FUCKING WORK atm!!! ?doesn't matter?
         //!!!check for dup names!!!
         //!!!check name for active player, ditch auth
         //!!!hash / salt pw
+
+        isTaskRunning = true;
+
         var roster = DbFactory.CreateDbContext();
 
         using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
@@ -364,6 +429,15 @@
                 var user = authstate.Result.User;
                 var trainer = user.Identity!.Name;
                 var pokemon = p.Name;
+                var tier = 8;
+
+                if(p.Tier == "mega"){ tier = 7; }
+                if(p.Tier == "one"){ tier = 1; }
+                if(p.Tier == "two"){ tier = 2; }
+                if(p.Tier == "three"){ tier = 3; }
+                if(p.Tier == "four"){ tier = 4; }
+                if(p.Tier == "five"){ tier = 5; }
+                if(p.Tier == "six") { tier = 5; }
 
                 //finds trainerId of logged in user
                 cmd.CommandText = @"SELECT Id FROM Trainer_Live WHERE team_owner = @Trainer";
@@ -371,12 +445,27 @@
                 var trainerId = Convert.ToInt32(cmd.ExecuteScalar());
                 cmd.ExecuteNonQuery();
 
-                message = "{trainer} wants to draft #{trainerId} {p.Name} as their {p.Tier}";
+                cmd.CommandText = @"SELECT TOP 1 Pick FROM DraftStats_Live WHERE Pokemon IS NULL";
+                var pick = Convert.ToInt32(cmd.ExecuteScalar());
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = @"SELECT TOP 1 Round FROM DraftStats_Live WHERE Pokemon IS NULL";
+                var round = Convert.ToInt32(cmd.ExecuteScalar());
+                cmd.ExecuteNonQuery();
+
+                message = "pick {pick}, round {round}: {trainer} wants to draft #{trainerId} {pokemon} as their {tier}";
+
+                //cmd.CommandText = "UPDATE DraftStats_Live SET Pokemon = 'Greninja', Tier = 1 WHERE Pick = 1";
+                cmd.CommandText = "UPDATE DraftStats_Live SET Pokemon = @Pokemon, Tier = 1 WHERE Pick = @Pick";
+                cmd.Parameters.AddWithValue("@Pokemon", pokemon);
+                cmd.Parameters.AddWithValue("@Tier", tier);
+                cmd.Parameters.AddWithValue("@Pick", pick);
+                cmd.ExecuteNonQuery();
 
                 //sets pokedex entry to new trainer
                 cmd.CommandText = "UPDATE Pokedex_Live SET Trainer = @TrainerId WHERE Name = @Pokemon";
                 cmd.Parameters.AddWithValue("@TrainerId", trainerId);
-                cmd.Parameters.AddWithValue("@Pokemon", pokemon);
+                //cmd.Parameters.AddWithValue("@Pokemon", pokemon);
                 cmd.ExecuteNonQuery();
 
                 //sets roster to new pokemon !!should probably be handled by views!!
@@ -480,9 +569,14 @@
                         cmd.CommandText = "UPDATE Rosters_Live SET tier_five_b = @Pokemon WHERE owner_id = @TrainerId";
                         cmd.ExecuteNonQuery();
                     }
-                } 
+                }
+
+
+                //cmd.CommandText = "UPDATE TOP 1 FROM DraftStats_Live SET @Pokemon WHERE ";
+                
             }
         }
+        navigationManager.NavigateTo("/livedraft", forceLoad: true);
         //confirmPopup = true;
     }
 
@@ -605,7 +699,6 @@
     {
         get
         {
-            //does this break the way to find current user?
             if(trainerFilter == "")
             {
                 var authstate = GetAuthenticationStateAsync.GetAuthenticationStateAsync();
@@ -646,6 +739,7 @@
         get
         {
             context = DbFactory.CreateDbContext();
+            //var result = context.DraftStats.Where(x => x.Pokemon == null);
             var result = context.DraftStats.Where(x => x.Pokemon == null);
             return result;
         }
@@ -661,24 +755,14 @@
         }
     }
 
-
-
-
-
-
-
-
-
-
-
     private Timer _timer;
     private TimeSpan _remainingTime;
     private bool _isRunning = false;
     private bool isTimeUp = false;
     private string remainingTimeFormatted => _remainingTime.ToString(@"hh\:mm\:ss");
 
-    private int round = 1;
-    private int pick = 1;
+    //private int round = 1;
+    //private int pick = 1;
     private int timezone;
     private bool penalty = false;
     private int playerCount = 16;
@@ -740,12 +824,12 @@
     // Button to set timer to 4 hours
     private void SetTimerTo4Hours()
     {
-        if(pick == playerCount)
-        {
-            round++;
-            pick = 0;
-        } 
-        pick++;
+        // if(pick == playerCount)
+        // {
+        //     round++;
+        //     pick = 0;
+        // } 
+        // pick++;
 
         _remainingTime = TimeSpan.FromHours(4);
         isTimeUp = false; // Reset "Time's Up!" flag
@@ -759,17 +843,17 @@
     private void SetTimerTo2Hours()
     {
 
-        if (pick == playerCount)
-        {
-            round++;
-            pick = 0;
-        }
-        pick++;
+        // if (pick == playerCount)
+        // {
+        //     round++;
+        //     pick = 0;
+        // }
+        // pick++;
 
         if(round > 11)
         {
-            round = 11;
-            pick = 16;
+            // round = 11;
+            // pick = 16;
             isTimeUp = true;
         }
         else
