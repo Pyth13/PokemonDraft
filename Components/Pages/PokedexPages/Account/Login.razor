@@ -53,15 +53,24 @@
 
     public async Task Authenticate()
     {
-        if(string.IsNullOrWhiteSpace(Model.UserName) ||
-            string.IsNullOrWhiteSpace(Model.Password))
+        //var userAccount = dbContext.Pokedex.Where(x => x.Trainer == Model.UserName).FirstOrDefault();
+        var userAccount = dbContext.Trainer.Where(x => x.TrainerName == Model.UserName).FirstOrDefault();
+
+        if(userAccount == null)
+        {
+            errorMessage = "Null username or password";
+            return;
+        }
+        else if(string.IsNullOrWhiteSpace(Model.UserName) ||
+            string.IsNullOrWhiteSpace(Model.Password) ||
+             userAccount!.Password != Model.Password)
         {
             errorMessage = "Invalid username or password";
             return;
         }
 
         //var userAccount = dbContext.Trainer.Where(x => x.TrainerName == Model.UserName).FirstOrDefault();
-        var userAccount = dbContext.Pokedex.Where(x => x.Trainer == Model.UserName).FirstOrDefault();
+        
 
         /*if (userAccount is null || !BCrypt.EnhancedVerify(Model.Password, userAccount.Password))
             {
@@ -82,13 +91,18 @@
 
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, Model.UserName)
+            new Claim(ClaimTypes.Name, Model.UserName),
+            new Claim(ClaimTypes.Name, Model.Password)
         };
 
-        var UserAccountPolicies = await dbContext.UserAccountsPolicies.Where(x => x.UserAccountId == userAccount.Id &&
-            x.IsEnabled).ToListAsync();
-        foreach (var userAccountPolicy in UserAccountPolicies)
-            claims.Add(new Claim(userAccountPolicy.UserPolicy, "true"));
+        //breaks here
+
+        //var CheckLogin = await dbContext.Trainer.Where(x => x.)
+
+        // var UserAccountPolicies = await dbContext.UserAccountsPolicies.Where(x => x.UserAccountId == userAccount.Id &&
+        //     x.IsEnabled).ToListAsync();
+        // foreach (var userAccountPolicy in UserAccountPolicies)
+        //     claims.Add(new Claim(userAccountPolicy.UserPolicy, "true"));
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);

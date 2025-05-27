@@ -21,8 +21,6 @@
     <Authorized>
         <h1>Logged in as <b>@authContext.User.Identity!.Name</b></h1>
         <h1> next pick is @nextPick</h1>
-        
-
     </Authorized>
 </AuthorizeView>
 
@@ -181,12 +179,12 @@
         <TemplateColumn>
         <AuthorizeView Context = "authContext">
             <Authorized>
-                @if(@authContext.User.Identity!.Name == nextPick)
+                @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
-                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                            <button @onclick="@(() => PickClick(context))"> PICK </button>
                         </div>
-                    }         
+                    } 
             </Authorized>
         </AuthorizeView>
         </TemplateColumn>
@@ -203,7 +201,7 @@
         <TemplateColumn>
             <AuthorizeView Context="authContext">
                 <Authorized>
-                    @if (@authContext.User.Identity!.Name == nextPick)
+                    @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
                             <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
@@ -225,7 +223,7 @@
         <TemplateColumn>
             <AuthorizeView Context="authContext">
                 <Authorized>
-                    @if (@authContext.User.Identity!.Name == nextPick)
+                    @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
                             <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
@@ -247,7 +245,7 @@
         <TemplateColumn>
             <AuthorizeView Context="authContext">
                 <Authorized>
-                    @if (@authContext.User.Identity!.Name == nextPick)
+                    @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
                             <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
@@ -269,7 +267,7 @@
         <TemplateColumn>
             <AuthorizeView Context="authContext">
                 <Authorized>
-                    @if (@authContext.User.Identity!.Name == nextPick)
+                    @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
                             <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
@@ -291,7 +289,7 @@
         <TemplateColumn>
             <AuthorizeView Context="authContext">
                 <Authorized>
-                    @if (@authContext.User.Identity!.Name == nextPick)
+                    @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
                             <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
@@ -313,7 +311,7 @@
         <TemplateColumn>
             <AuthorizeView Context="authContext">
                 <Authorized>
-                    @if (@authContext.User.Identity!.Name == nextPick)
+                    @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
                             <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
@@ -431,13 +429,13 @@
                 var pokemon = p.Name;
                 var tier = 8;
 
-                if(p.Tier == "mega"){ tier = 7; }
-                if(p.Tier == "one"){ tier = 1; }
-                if(p.Tier == "two"){ tier = 2; }
-                if(p.Tier == "three"){ tier = 3; }
-                if(p.Tier == "four"){ tier = 4; }
-                if(p.Tier == "five"){ tier = 5; }
-                if(p.Tier == "six") { tier = 5; }
+                if(p.Tier == "Mega"){ tier = 7; }
+                if(p.Tier == "One"){ tier = 1; }
+                if(p.Tier == "Two"){ tier = 2; }
+                if(p.Tier == "Three"){ tier = 3; }
+                if(p.Tier == "Four"){ tier = 4; }
+                if(p.Tier == "Five"){ tier = 5; }
+                if(p.Tier == "Six") { tier = 5; }
 
                 //finds trainerId of logged in user
                 cmd.CommandText = @"SELECT Id FROM Trainer_Live WHERE team_owner = @Trainer";
@@ -456,7 +454,7 @@
                 message = "pick {pick}, round {round}: {trainer} wants to draft #{trainerId} {pokemon} as their {tier}";
 
                 //cmd.CommandText = "UPDATE DraftStats_Live SET Pokemon = 'Greninja', Tier = 1 WHERE Pick = 1";
-                cmd.CommandText = "UPDATE DraftStats_Live SET Pokemon = @Pokemon, Tier = 1 WHERE Pick = @Pick";
+                cmd.CommandText = "UPDATE DraftStats_Live SET Pokemon = @Pokemon, Tier = @Tier WHERE Pick = @Pick";
                 cmd.Parameters.AddWithValue("@Pokemon", pokemon);
                 cmd.Parameters.AddWithValue("@Tier", tier);
                 cmd.Parameters.AddWithValue("@Pick", pick);
@@ -573,7 +571,7 @@
 
 
                 //cmd.CommandText = "UPDATE TOP 1 FROM DraftStats_Live SET @Pokemon WHERE ";
-                
+
             }
         }
         navigationManager.NavigateTo("/livedraft", forceLoad: true);
@@ -729,7 +727,8 @@
         get
         {
             context = DbFactory.CreateDbContext();
-            var result = context.DraftStats;
+            var result = context.DraftStats.Where(x => x.Tier != "");
+            //var result = context.DraftStats;
             return result;
         }
     }
