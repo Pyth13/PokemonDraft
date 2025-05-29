@@ -61,10 +61,12 @@
         <p class="alert alert-danger">Time's Up!</p>
     }
 
-    <button @onclick="SetTimerTo4Hours">Early Round Timer</button>
+    @* <button @onclick="SetTimerTo4Hours">Early Round Timer</button>
     <button @onclick="SetTimerTo2Hours">Later Round Timer</button>
     <button @onclick="SetTimerTo3PM">DEBUG</button>
-    <button @onclick="ResetTimerTo4Hours">Next Player</button>
+    <button @onclick="ResetTimerTo4Hours">Next Player</button> *@
+
+    @* <button @onclick="StopTimer">Stop Timer (DEBUG)</button> *@
 
         <br>Recent Picks<br />
 
@@ -183,7 +185,7 @@
                 @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
-                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                            <button disabled="@checkMega" @onclick="@(() => PickClick(context))"> PICK </button>
                         </div>
                     } 
             </Authorized>
@@ -205,7 +207,7 @@
                     @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
-                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                                <button disabled="@checkOne" @onclick="@(() => PickClick(context))"> PICK </button>
                         </div>
                     }
                 </Authorized>
@@ -227,7 +229,7 @@
                     @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
-                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                                <button disabled="@checkTwo" @onclick="@(() => PickClick(context))"> PICK </button>
                         </div>
                     }
                 </Authorized>
@@ -249,7 +251,7 @@
                     @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
-                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                                <button disabled="@checkThree" @onclick="@(() => PickClick(context))"> PICK </button>
                         </div>
                     }
                 </Authorized>
@@ -271,7 +273,7 @@
                     @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
-                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                                <button disabled="@checkFour" @onclick="@(() => PickClick(context))"> PICK </button>
                         </div>
                     }
                 </Authorized>
@@ -293,7 +295,7 @@
                     @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
-                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                                <button disabled="@checkFive" @onclick="@(() => PickClick(context))"> PICK </button>
                         </div>
                     }
                 </Authorized>
@@ -315,7 +317,7 @@
                     @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
-                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
+                            <button disabled="@checkFive" @onclick="@(() => PickClick(context))"> PICK </button>
                         </div>
                     }
                 </Authorized>
@@ -339,7 +341,12 @@
     string trainerFilter = string.Empty;
     string message = string.Empty;
     private bool confirmPopup = false;
-    private bool isTaskRunning = false;
+    private bool checkMega = false;
+    private bool checkOne = false;
+    private bool checkTwo = false;
+    private bool checkThree = false;
+    private bool checkFour = false;
+    private bool checkFive = false;
     private bool _hasUpdated = false;
     private int pick = 0;
     private int round = 0;
@@ -385,6 +392,7 @@
                 round = Convert.ToInt32(cmd.ExecuteScalar());
                 cmd.ExecuteNonQuery();
             }
+            cnn.Close();
         }
     }
 
@@ -412,27 +420,79 @@
                     cmd.ExecuteNonQuery();
 
                     nextPick = localPick!;
+
+                    cmd.CommandText = @"SELECT mega FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var megaCheck = cmd.ExecuteScalar() as string;
+                    if (megaCheck != null)
+                    {
+                        checkMega = true;
+                    }
+
+                    cmd.CommandText = @"SELECT tier_one_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var oneACheck = cmd.ExecuteScalar() as string;
+                    cmd.CommandText = @"SELECT tier_one_b FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var oneBCheck = cmd.ExecuteScalar() as string;
+                    if (oneACheck != null && oneBCheck != null)
+                    {
+                        checkOne = true;
+                    }
+
+                    cmd.CommandText = @"SELECT tier_two_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var twoACheck = cmd.ExecuteScalar() as string;
+                    cmd.CommandText = @"SELECT tier_two_b FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var twoBCheck = cmd.ExecuteScalar() as string;
+                    if (twoACheck != null && twoBCheck != null)
+                    {
+                        checkTwo = true;
+                    }
+
+                    cmd.CommandText = @"SELECT tier_three_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var threeACheck = cmd.ExecuteScalar() as string;
+                    cmd.CommandText = @"SELECT tier_three_b FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var threeBCheck = cmd.ExecuteScalar() as string;
+                    if (threeACheck != null && threeBCheck != null)
+                    {
+                        checkThree = true;
+                    }
+
+                    cmd.CommandText = @"SELECT tier_four_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var fourACheck = cmd.ExecuteScalar() as string;
+                    cmd.CommandText = @"SELECT tier_four_b FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var fourBCheck = cmd.ExecuteScalar() as string;
+                    if (fourACheck != null && fourBCheck != null)
+                    {
+                        checkFour = true;
+                    }
+
+                    cmd.CommandText = @"SELECT tier_five_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var fiveACheck = cmd.ExecuteScalar() as string;
+                    cmd.CommandText = @"SELECT tier_five_b FROM Rosters_Live WHERE owner_id = @TrainerId";
+                    var fiveBCheck = cmd.ExecuteScalar() as string;
+                    if (fiveACheck != null && fiveBCheck != null)
+                    {
+                        checkFive = true;
+                    }
                 }
                 else
                 {
                     nextPick = "no user logged in";
                 }
-                //nextpick might be not resetting?               
+                //nextpick might be not resetting?  
+
+
+
             }
+            cnn.Close();
         }
     }
 
     public void PickClick(Pokedex p)
     {
-        //!!change pagination to "show next 10"
-        //!!!check to see if user is allowed to pick that tier, should be handled by checking if they are allowed to pick!!!
         //!!!hash / salt pw
-        //!!!change timer to have pause button that only "Pyth" can see
-        //!!!insert dummy data to timer skip (stub)
+        //!change timer to have pause button that only "Pyth" can see! I DONT THINK THIS WILL WORK
 
         DateTime currentTime = DateTime.Now;
         var oldTime = context.DraftStats.Where(x => x.Tier != "").First();
-
         var roster = DbFactory.CreateDbContext();
 
         using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
@@ -457,137 +517,278 @@
                 //finds trainerId of logged in user
                 cmd.CommandText = @"SELECT Id FROM Trainer_Live WHERE team_owner = @Trainer";
                 cmd.Parameters.AddWithValue("@Trainer", trainer);
-                var trainerId = Convert.ToInt32(cmd.ExecuteScalar());
+                var trainerId = Convert.ToInt32(cmd.ExecuteScalar());               
                 cmd.ExecuteNonQuery();
 
-                cmd.CommandText = @"SELECT TOP 1 Pick FROM DraftStats_Live WHERE Pokemon IS NULL";
-                var pick = Convert.ToInt32(cmd.ExecuteScalar());
-                cmd.ExecuteNonQuery();
-
-                cmd.CommandText = @"SELECT TOP 1 Round FROM DraftStats_Live WHERE Pokemon IS NULL";
-                var round = Convert.ToInt32(cmd.ExecuteScalar());
-                cmd.ExecuteNonQuery();
-
-                message = "pick {pick}, round {round}: {trainer} wants to draft #{trainerId} {pokemon} as their {tier} at {currentTime}";
-
-                cmd.CommandText = "UPDATE DraftStats_Live SET Pokemon = @Pokemon, Tier = @Tier, Timestamp = @Time WHERE Pick = @Pick";
-                cmd.Parameters.AddWithValue("@Pokemon", pokemon);
-                cmd.Parameters.AddWithValue("@Tier", tier);
-                cmd.Parameters.AddWithValue("@Pick", pick);
-                cmd.Parameters.AddWithValue("@Time", currentTime);
-                cmd.ExecuteNonQuery();
-
-                //sets pokedex entry to new trainer
-                cmd.CommandText = "UPDATE Pokedex_Live SET Trainer = @TrainerId WHERE Name = @Pokemon";
+                cmd.CommandText = @"SELECT team_owner FROM Trainer_Live WHERE Id = @TrainerId";
                 cmd.Parameters.AddWithValue("@TrainerId", trainerId);
-                //cmd.Parameters.AddWithValue("@Pokemon", pokemon);
+                var checkTrainer = cmd.ExecuteScalar() as string;
                 cmd.ExecuteNonQuery();
+                var compareCheckTrainer = checkTrainer!.ToLower();
+                var compareTrainer = trainer!.ToLower();
 
-                //sets roster to new pokemon !!should probably be handled by views!!
-                if(p.Tier!.Equals("Mega"))
+                if (compareCheckTrainer as string == compareTrainer as string)
                 {
-                    cmd.CommandText = "UPDATE Rosters_Live SET mega = @Pokemon WHERE owner_id = @TrainerId";
+                    cmd.CommandText = @"SELECT TOP 1 Pick FROM DraftStats_Live WHERE Pokemon IS NULL";
+                    var pick = Convert.ToInt32(cmd.ExecuteScalar());
                     cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = @"SELECT TOP 1 Round FROM DraftStats_Live WHERE Pokemon IS NULL";
+                    var round = Convert.ToInt32(cmd.ExecuteScalar());
+                    cmd.ExecuteNonQuery();
+
+                    message = "pick {pick}, round {round}: {trainer} wants to draft #{trainerId} {pokemon} as their {tier} at {currentTime}";
+
+                    cmd.CommandText = "UPDATE DraftStats_Live SET Pokemon = @Pokemon, Tier = @Tier, Timestamp = @Time WHERE Pick = @Pick";
+                    cmd.Parameters.AddWithValue("@Pokemon", pokemon);
+                    cmd.Parameters.AddWithValue("@Tier", tier);
+                    cmd.Parameters.AddWithValue("@Pick", pick);
+                    cmd.Parameters.AddWithValue("@Time", currentTime);
+                    cmd.ExecuteNonQuery();
+
+                    //sets pokedex entry to new trainer
+                    cmd.CommandText = "UPDATE Pokedex_Live SET Trainer = @TrainerId WHERE Name = @Pokemon";
+                    //cmd.Parameters.AddWithValue("@TrainerId", trainerId);
+                    //cmd.Parameters.AddWithValue("@Pokemon", pokemon);
+                    cmd.ExecuteNonQuery();
+
+                    //sets roster to new pokemon !!should probably be handled by views!!
+                    if (p.Tier!.Equals("Mega"))
+                    {
+                        cmd.CommandText = "UPDATE Rosters_Live SET mega = @Pokemon WHERE owner_id = @TrainerId";
+                        cmd.ExecuteNonQuery();
+                    }
+                    if (p.Tier!.Equals("One"))
+                    {
+                        //check to see if this is the first or second pick of this tier
+                        cmd.CommandText = @"SELECT tier_one_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                        var rosterCheck = cmd.ExecuteScalar() as string;
+                        if (rosterCheck == null)
+                        {
+                            cmd.CommandText = "UPDATE Rosters_Live SET tier_one_a = @Pokemon WHERE owner_id = @TrainerId";
+                            cmd.ExecuteNonQuery();
+                        }
+                        else
+                        {
+                            cmd.CommandText = "UPDATE Rosters_Live SET tier_one_b = @Pokemon WHERE owner_id = @TrainerId";
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    if (p.Tier!.Equals("Two"))
+                    {
+                        //check to see if this is the first or second pick of this tier
+                        cmd.CommandText = @"SELECT tier_two_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                        var rosterCheck = cmd.ExecuteScalar() as string;
+                        if (rosterCheck == null)
+                        {
+                            cmd.CommandText = "UPDATE Rosters_Live SET tier_two_a = @Pokemon WHERE owner_id = @TrainerId";
+                            cmd.ExecuteNonQuery();
+                        }
+                        else
+                        {
+                            cmd.CommandText = "UPDATE Rosters_Live SET tier_two_b = @Pokemon WHERE owner_id = @TrainerId";
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    if (p.Tier!.Equals("Three"))
+                    {
+                        //check to see if this is the first or second pick of this tier
+                        cmd.CommandText = @"SELECT tier_three_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                        var rosterCheck = cmd.ExecuteScalar() as string;
+                        if (rosterCheck == null)
+                        {
+                            cmd.CommandText = "UPDATE Rosters_Live SET tier_three_a = @Pokemon WHERE owner_id = @TrainerId";
+                            cmd.ExecuteNonQuery();
+                        }
+                        else
+                        {
+                            cmd.CommandText = "UPDATE Rosters_Live SET tier_three_b = @Pokemon WHERE owner_id = @TrainerId";
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    if (p.Tier!.Equals("Four"))
+                    {
+                        //check to see if this is the first or second pick of this tier
+                        cmd.CommandText = @"SELECT tier_four_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                        var rosterCheck = cmd.ExecuteScalar() as string;
+                        if (rosterCheck == null)
+                        {
+                            cmd.CommandText = "UPDATE Rosters_Live SET tier_four_a = @Pokemon WHERE owner_id = @TrainerId";
+                            cmd.ExecuteNonQuery();
+                        }
+                        else
+                        {
+                            cmd.CommandText = "UPDATE Rosters_Live SET tier_four_b = @Pokemon WHERE owner_id = @TrainerId";
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    if (p.Tier!.Equals("Five"))
+                    {
+                        //check to see if this is the first or second pick of this tier
+                        cmd.CommandText = @"SELECT tier_four_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                        var rosterCheck = cmd.ExecuteScalar() as string;
+                        if (rosterCheck == null)
+                        {
+                            cmd.CommandText = "UPDATE Rosters_Live SET tier_five_a = @Pokemon WHERE owner_id = @TrainerId";
+                            cmd.ExecuteNonQuery();
+                        }
+                        else
+                        {
+                            cmd.CommandText = "UPDATE Rosters_Live SET tier_five_b = @Pokemon WHERE owner_id = @TrainerId";
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    if (p.Tier!.Equals("Six"))
+                    {
+                        //check to see if this is the first or second pick of this tier
+                        cmd.CommandText = @"SELECT tier_five_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                        var rosterCheck = cmd.ExecuteScalar() as string;
+                        if (rosterCheck == null)
+                        {
+                            cmd.CommandText = "UPDATE Rosters_Live SET tier_five_a = @Pokemon WHERE owner_id = @TrainerId";
+                            cmd.ExecuteNonQuery();
+                        }
+                        else
+                        {
+                            cmd.CommandText = "UPDATE Rosters_Live SET tier_five_b = @Pokemon WHERE owner_id = @TrainerId";
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    navigationManager.NavigateTo("/livedraft", forceLoad: true);
                 }
-                if(p.Tier!.Equals("One"))
+                else
                 {
-                    //check to see if this is the first or second pick of this tier
-                    cmd.CommandText = @"SELECT tier_one_a FROM Rosters_Live WHERE owner_id = @TrainerId";                 
-                    var rosterCheck = cmd.ExecuteScalar() as string;
-                    if (rosterCheck == null)
-                    {
-                        cmd.CommandText = "UPDATE Rosters_Live SET tier_one_a = @Pokemon WHERE owner_id = @TrainerId";
-                        cmd.ExecuteNonQuery();
-                    }
-                    else
-                    {
-                        cmd.CommandText = "UPDATE Rosters_Live SET tier_one_b = @Pokemon WHERE owner_id = @TrainerId";
-                        cmd.ExecuteNonQuery();
-                    }
+                    message = "test";
                 }
-                if (p.Tier!.Equals("Two"))
-                {
-                    //check to see if this is the first or second pick of this tier
-                    cmd.CommandText = @"SELECT tier_two_a FROM Rosters_Live WHERE owner_id = @TrainerId";
-                    var rosterCheck = cmd.ExecuteScalar() as string;
-                    if (rosterCheck == null)
-                    {
-                        cmd.CommandText = "UPDATE Rosters_Live SET tier_two_a = @Pokemon WHERE owner_id = @TrainerId";
-                        cmd.ExecuteNonQuery();
-                    }
-                    else
-                    {
-                        cmd.CommandText = "UPDATE Rosters_Live SET tier_two_b = @Pokemon WHERE owner_id = @TrainerId";
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-                if (p.Tier!.Equals("Three"))
-                {
-                    //check to see if this is the first or second pick of this tier
-                    cmd.CommandText = @"SELECT tier_three_a FROM Rosters_Live WHERE owner_id = @TrainerId";
-                    var rosterCheck = cmd.ExecuteScalar() as string;
-                    if (rosterCheck == null)
-                    {
-                        cmd.CommandText = "UPDATE Rosters_Live SET tier_three_a = @Pokemon WHERE owner_id = @TrainerId";
-                        cmd.ExecuteNonQuery();
-                    }
-                    else
-                    {
-                        cmd.CommandText = "UPDATE Rosters_Live SET tier_three_b = @Pokemon WHERE owner_id = @TrainerId";
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-                if (p.Tier!.Equals("Four"))
-                {
-                    //check to see if this is the first or second pick of this tier
-                    cmd.CommandText = @"SELECT tier_four_a FROM Rosters_Live WHERE owner_id = @TrainerId";
-                    var rosterCheck = cmd.ExecuteScalar() as string;
-                    if (rosterCheck == null)
-                    {
-                        cmd.CommandText = "UPDATE Rosters_Live SET tier_four_a = @Pokemon WHERE owner_id = @TrainerId";
-                        cmd.ExecuteNonQuery();
-                    }
-                    else
-                    {
-                        cmd.CommandText = "UPDATE Rosters_Live SET tier_four_b = @Pokemon WHERE owner_id = @TrainerId";
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-                if (p.Tier!.Equals("Five"))
-                {
-                    //check to see if this is the first or second pick of this tier
-                    cmd.CommandText = @"SELECT tier_four_a FROM Rosters_Live WHERE owner_id = @TrainerId";
-                    var rosterCheck = cmd.ExecuteScalar() as string;
-                    if (rosterCheck == null)
-                    {
-                        cmd.CommandText = "UPDATE Rosters_Live SET tier_five_a = @Pokemon WHERE owner_id = @TrainerId";
-                        cmd.ExecuteNonQuery();
-                    }
-                    else
-                    {
-                        cmd.CommandText = "UPDATE Rosters_Live SET tier_five_b = @Pokemon WHERE owner_id = @TrainerId";
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-                if (p.Tier!.Equals("Six"))
-                {
-                    //check to see if this is the first or second pick of this tier
-                    cmd.CommandText = @"SELECT tier_five_a FROM Rosters_Live WHERE owner_id = @TrainerId";
-                    var rosterCheck = cmd.ExecuteScalar() as string;
-                    if (rosterCheck == null)
-                    {
-                        cmd.CommandText = "UPDATE Rosters_Live SET tier_five_a = @Pokemon WHERE owner_id = @TrainerId";
-                        cmd.ExecuteNonQuery();
-                    }
-                    else
-                    {
-                        cmd.CommandText = "UPDATE Rosters_Live SET tier_five_b = @Pokemon WHERE owner_id = @TrainerId";
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+
+                // cmd.CommandText = @"SELECT TOP 1 Pick FROM DraftStats_Live WHERE Pokemon IS NULL";
+                // var pick = Convert.ToInt32(cmd.ExecuteScalar());
+                // cmd.ExecuteNonQuery();
+
+                // cmd.CommandText = @"SELECT TOP 1 Round FROM DraftStats_Live WHERE Pokemon IS NULL";
+                // var round = Convert.ToInt32(cmd.ExecuteScalar());
+                // cmd.ExecuteNonQuery();
+
+                // message = "pick {pick}, round {round}: {trainer} wants to draft #{trainerId} {pokemon} as their {tier} at {currentTime}";
+
+                // cmd.CommandText = "UPDATE DraftStats_Live SET Pokemon = @Pokemon, Tier = @Tier, Timestamp = @Time WHERE Pick = @Pick";
+                // cmd.Parameters.AddWithValue("@Pokemon", pokemon);
+                // cmd.Parameters.AddWithValue("@Tier", tier);
+                // cmd.Parameters.AddWithValue("@Pick", pick);
+                // cmd.Parameters.AddWithValue("@Time", currentTime);
+                // cmd.ExecuteNonQuery();
+
+                // //sets pokedex entry to new trainer
+                // cmd.CommandText = "UPDATE Pokedex_Live SET Trainer = @TrainerId WHERE Name = @Pokemon";
+                // //cmd.Parameters.AddWithValue("@TrainerId", trainerId);
+                // //cmd.Parameters.AddWithValue("@Pokemon", pokemon);
+                // cmd.ExecuteNonQuery();
+
+                // //sets roster to new pokemon !!should probably be handled by views!!
+                // if(p.Tier!.Equals("Mega"))
+                // {
+                //     cmd.CommandText = "UPDATE Rosters_Live SET mega = @Pokemon WHERE owner_id = @TrainerId";
+                //     cmd.ExecuteNonQuery();
+                // }
+                // if(p.Tier!.Equals("One"))
+                // {
+                //     //check to see if this is the first or second pick of this tier
+                //     cmd.CommandText = @"SELECT tier_one_a FROM Rosters_Live WHERE owner_id = @TrainerId";                 
+                //     var rosterCheck = cmd.ExecuteScalar() as string;
+                //     if (rosterCheck == null)
+                //     {
+                //         cmd.CommandText = "UPDATE Rosters_Live SET tier_one_a = @Pokemon WHERE owner_id = @TrainerId";
+                //         cmd.ExecuteNonQuery();
+                //     }
+                //     else
+                //     {
+                //         cmd.CommandText = "UPDATE Rosters_Live SET tier_one_b = @Pokemon WHERE owner_id = @TrainerId";
+                //         cmd.ExecuteNonQuery();
+                //     }
+                // }
+                // if (p.Tier!.Equals("Two"))
+                // {
+                //     //check to see if this is the first or second pick of this tier
+                //     cmd.CommandText = @"SELECT tier_two_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                //     var rosterCheck = cmd.ExecuteScalar() as string;
+                //     if (rosterCheck == null)
+                //     {
+                //         cmd.CommandText = "UPDATE Rosters_Live SET tier_two_a = @Pokemon WHERE owner_id = @TrainerId";
+                //         cmd.ExecuteNonQuery();
+                //     }
+                //     else
+                //     {
+                //         cmd.CommandText = "UPDATE Rosters_Live SET tier_two_b = @Pokemon WHERE owner_id = @TrainerId";
+                //         cmd.ExecuteNonQuery();
+                //     }
+                // }
+                // if (p.Tier!.Equals("Three"))
+                // {
+                //     //check to see if this is the first or second pick of this tier
+                //     cmd.CommandText = @"SELECT tier_three_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                //     var rosterCheck = cmd.ExecuteScalar() as string;
+                //     if (rosterCheck == null)
+                //     {
+                //         cmd.CommandText = "UPDATE Rosters_Live SET tier_three_a = @Pokemon WHERE owner_id = @TrainerId";
+                //         cmd.ExecuteNonQuery();
+                //     }
+                //     else
+                //     {
+                //         cmd.CommandText = "UPDATE Rosters_Live SET tier_three_b = @Pokemon WHERE owner_id = @TrainerId";
+                //         cmd.ExecuteNonQuery();
+                //     }
+                // }
+                // if (p.Tier!.Equals("Four"))
+                // {
+                //     //check to see if this is the first or second pick of this tier
+                //     cmd.CommandText = @"SELECT tier_four_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                //     var rosterCheck = cmd.ExecuteScalar() as string;
+                //     if (rosterCheck == null)
+                //     {
+                //         cmd.CommandText = "UPDATE Rosters_Live SET tier_four_a = @Pokemon WHERE owner_id = @TrainerId";
+                //         cmd.ExecuteNonQuery();
+                //     }
+                //     else
+                //     {
+                //         cmd.CommandText = "UPDATE Rosters_Live SET tier_four_b = @Pokemon WHERE owner_id = @TrainerId";
+                //         cmd.ExecuteNonQuery();
+                //     }
+                // }
+                // if (p.Tier!.Equals("Five"))
+                // {
+                //     //check to see if this is the first or second pick of this tier
+                //     cmd.CommandText = @"SELECT tier_four_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                //     var rosterCheck = cmd.ExecuteScalar() as string;
+                //     if (rosterCheck == null)
+                //     {
+                //         cmd.CommandText = "UPDATE Rosters_Live SET tier_five_a = @Pokemon WHERE owner_id = @TrainerId";
+                //         cmd.ExecuteNonQuery();
+                //     }
+                //     else
+                //     {
+                //         cmd.CommandText = "UPDATE Rosters_Live SET tier_five_b = @Pokemon WHERE owner_id = @TrainerId";
+                //         cmd.ExecuteNonQuery();
+                //     }
+                // }
+                // if (p.Tier!.Equals("Six"))
+                // {
+                //     //check to see if this is the first or second pick of this tier
+                //     cmd.CommandText = @"SELECT tier_five_a FROM Rosters_Live WHERE owner_id = @TrainerId";
+                //     var rosterCheck = cmd.ExecuteScalar() as string;
+                //     if (rosterCheck == null)
+                //     {
+                //         cmd.CommandText = "UPDATE Rosters_Live SET tier_five_a = @Pokemon WHERE owner_id = @TrainerId";
+                //         cmd.ExecuteNonQuery();
+                //     }
+                //     else
+                //     {
+                //         cmd.CommandText = "UPDATE Rosters_Live SET tier_five_b = @Pokemon WHERE owner_id = @TrainerId";
+                //         cmd.ExecuteNonQuery();
+                //     }
+                // }
             }
         }
-        navigationManager.NavigateTo("/livedraft", forceLoad: true);
+        //navigationManager.NavigateTo("/livedraft", forceLoad: true);
         //confirmPopup = true;
     }
 
@@ -797,23 +998,21 @@
             if (!_isRunning)
             {
                 _isRunning = true;
-                SetSkippedPick();
+                //SetSkippedPick();
             }
 
             SetTimerTo4Hours();
         }
         else if(round > 4)
         {
-            //SetTimerTo2Hours();
-
             if (!_isRunning)
             {
                 _isRunning = true;
-                SetSkippedPick();
+                //SetSkippedPick();
             }
 
-            //SetTimerTo2Hours();
-            SetTimerTo4Hours();
+            SetTimerTo2Hours();
+            //SetTimerTo4Hours();
         }
 
     }
@@ -953,13 +1152,6 @@
 
             //timeDiff = TimeSpan.FromSeconds(7);
         }
-        // if (skipped == "Skipped")
-        // {
-        //     timeDiff = TimeSpan.FromHours(4) - (currentTime - oldTime);
-
-        //     //timeDiff = TimeSpan.FromSeconds(6);
-        // }
-
 
         //_remainingTime = currentTime;
         _remainingTime = timeDiff;
@@ -973,29 +1165,63 @@
     // Button to set timer to 2 hours
     private void SetTimerTo2Hours()
     {
+        DateTime currentTime = DateTime.Now;
+        DateTime oldTime = DateTime.MinValue;
+        TimeSpan timeDiff = TimeSpan.MinValue;
+        // string skipped = string.Empty;
+        var roster = DbFactory.CreateDbContext();
 
-        // if (pick == playerCount)
-        // {
-        //     round++;
-        //     pick = 0;
-        // }
-        // pick++;
-
-        if(round > 11)
+        if (round > 11)
         {
             // round = 11;
             // pick = 16;
             isTimeUp = true;
         }
-        else
+
+        using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
         {
-            _remainingTime = TimeSpan.FromHours(2);
-            isTimeUp = false; // Reset "Time's Up!" flag
-            if (!_isRunning)
+            cnn.Open();
+            using (var cmd = cnn.CreateCommand())
             {
-                StartTimer();
+                cmd.CommandText = @"SELECT Timestamp FROM DraftStats_Live WHERE ID = (SELECT MAX(Id) FROM DraftStats_Live WHERE Pokemon is NOT NULL)";
+                var parseTime = cmd.ExecuteScalar();
+                cmd.ExecuteNonQuery();
+
+                // cmd.CommandText = @"SELECT Pokemon FROM DraftStats_Live WHERE ID = (SELECT MAX(Id) FROM DraftStats_Live WHERE Pokemon is NOT NULL)";
+                // var parseSkipped = cmd.ExecuteScalar() as string;
+                // cmd.ExecuteNonQuery();
+
+                //var message = "time: {parseTime}";
+                oldTime = Convert.ToDateTime(parseTime);
+                //skipped = Convert.ToString(parseSkipped!);
             }
         }
+
+        if (oldTime != DateTime.MinValue)
+        {
+            timeDiff = TimeSpan.FromHours(2) - (currentTime - oldTime);
+
+            //timeDiff = TimeSpan.FromSeconds(7);
+        }
+
+        //_remainingTime = currentTime;
+        _remainingTime = timeDiff;
+        isTimeUp = false; // Reset "Time's Up!" flag
+        if (!_isRunning)
+        {
+            StartTimer();
+        }
+
+        
+        // else
+        // {
+        //     _remainingTime = TimeSpan.FromHours(2);
+        //     isTimeUp = false; // Reset "Time's Up!" flag
+        //     if (!_isRunning)
+        //     {
+        //         StartTimer();
+        //     }
+        // }
     }
 
     // Button to set timer to countdown to 3 PM EST
@@ -1017,7 +1243,7 @@
         //     StartTimer();
         // }
 
-        SetSkippedPick();
+        //SetSkippedPick();
 
 
     }
