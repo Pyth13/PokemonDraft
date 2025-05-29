@@ -348,6 +348,7 @@
     {
         FindNextPick();
         GetPickAndRound();
+        StartTimer();
         await base.OnInitializedAsync();
     }
 
@@ -407,14 +408,15 @@
 
     public void PickClick(Pokedex p)
     {
-        //!!function to remove old pokemon from roster??? maybe for trades? likely uncessary for now!!
-        //!!would like this to have a confirmation window!!
-        //!!!check to see if user is allowed to pick that tier, should be handled by disabling button!!!
-        //!!!check for dup names!!!
-        //!!!check name for active player, ditch auth
+        //!!change pagination to "show next 10"
+        //!!!check to see if user is allowed to pick that tier, should be handled by checking if they are allowed to pick!!!
         //!!!hash / salt pw
+        //!!!change timer to have pause button that only "Pyth" can see
+        //!!!insert dummy data to timer skip (stub)
 
         isTaskRunning = true;
+        DateTime currentTime = DateTime.Now;
+        var oldTime = context.DraftStats.Where(x => x.Tier != "").First();
 
         var roster = DbFactory.CreateDbContext();
 
@@ -451,13 +453,13 @@
                 var round = Convert.ToInt32(cmd.ExecuteScalar());
                 cmd.ExecuteNonQuery();
 
-                message = "pick {pick}, round {round}: {trainer} wants to draft #{trainerId} {pokemon} as their {tier}";
+                message = "pick {pick}, round {round}: {trainer} wants to draft #{trainerId} {pokemon} as their {tier} at {currentTime}";
 
-                //cmd.CommandText = "UPDATE DraftStats_Live SET Pokemon = 'Greninja', Tier = 1 WHERE Pick = 1";
-                cmd.CommandText = "UPDATE DraftStats_Live SET Pokemon = @Pokemon, Tier = @Tier WHERE Pick = @Pick";
+                cmd.CommandText = "UPDATE DraftStats_Live SET Pokemon = @Pokemon, Tier = @Tier, Timestamp = @Time WHERE Pick = @Pick";
                 cmd.Parameters.AddWithValue("@Pokemon", pokemon);
                 cmd.Parameters.AddWithValue("@Tier", tier);
                 cmd.Parameters.AddWithValue("@Pick", pick);
+                cmd.Parameters.AddWithValue("@Time", currentTime);
                 cmd.ExecuteNonQuery();
 
                 //sets pokedex entry to new trainer
@@ -568,10 +570,6 @@
                         cmd.ExecuteNonQuery();
                     }
                 }
-
-
-                //cmd.CommandText = "UPDATE TOP 1 FROM DraftStats_Live SET @Pokemon WHERE ";
-
             }
         }
         navigationManager.NavigateTo("/livedraft", forceLoad: true);
@@ -756,7 +754,7 @@
 
     private Timer _timer;
     private TimeSpan _remainingTime;
-    private bool _isRunning = false;
+    private bool _isRunning = true;
     private bool isTimeUp = false;
     private string remainingTimeFormatted => _remainingTime.ToString(@"hh\:mm\:ss");
 
@@ -765,6 +763,7 @@
     private int timezone;
     private bool penalty = false;
     private int playerCount = 16;
+    private int test = 0;
 
     // Method to start the countdown timer
     private void StartTimer()
@@ -775,8 +774,36 @@
             _timer.Elapsed += TimerElapsed;
         }
 
-        _timer.Start();
-        _isRunning = true;
+        // _timer.Start();
+        // _isRunning = true;
+
+        if (round < 5)
+        {
+            _timer.Start();
+            //_isRunning = true;
+
+            if (!_isRunning)
+            {
+                //SetSkippedPick();
+            }
+
+            SetTimerTo4Hours();
+        }
+        else if(round > 4)
+        {
+            _timer.Start();
+            _isRunning = true;
+            //SetTimerTo2Hours();
+
+            if (!_isRunning)
+            {
+                //SetSkippedPick();
+            }
+
+            //SetTimerTo2Hours();
+            SetTimerTo4Hours();
+        }
+
     }
 
     // Method to stop the countdown timer
@@ -803,11 +830,57 @@
             }
             else
             {
+                _remainingTime = _remainingTime.Add(TimeSpan.FromSeconds(999)); //please stop entering this 15 times aaaaa
+
                 // Timer finished, show "Time's Up!" message
                 isTimeUp = true;
                 StopTimer();
                 InvokeAsync(StateHasChanged); // Update UI with "Time's Up!"
+                //_ = SetSkippedPick();
+                StartTimer();
             }
+        }
+    }
+
+    private async Task SetSkippedPick()
+    {
+        _isRunning = true;
+
+        var roster = DbFactory.CreateDbContext();
+
+        using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
+        {
+            cnn.Open();
+            using (var cmd = cnn.CreateCommand())
+            {
+                var authstate = GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+                var user = authstate.Result.User;
+                var trainer = user.Identity!.Name;
+                var pokemon = "Skipped";
+                var tier = 9;
+                DateTime currentTime = DateTime.Now;
+
+                cmd.CommandText = @"SELECT TOP 1 Pick FROM DraftStats_Live WHERE Pokemon IS NULL";
+                var pick = Convert.ToInt32(cmd.ExecuteScalar());
+                //cmd.ExecuteNonQuery();
+
+                cmd.CommandText = @"SELECT TOP 1 Round FROM DraftStats_Live WHERE Pokemon IS NULL";
+                var round = Convert.ToInt32(cmd.ExecuteScalar());
+                //cmd.ExecuteNonQuery();
+
+                message = "pick {pick}, round {round}: {trainer} wants to draft #{trainerId} {pokemon} as their {tier} at {currentTime}";
+
+                cmd.CommandText = "UPDATE DraftStats_Live SET Pokemon = @Pokemon, Tier = @Tier, Timestamp = @Time WHERE Pick = @Pick";
+                cmd.Parameters.AddWithValue("@Pokemon", pokemon);
+                cmd.Parameters.AddWithValue("@Tier", tier);
+                cmd.Parameters.AddWithValue("@Pick", pick);
+                cmd.Parameters.AddWithValue("@Time", currentTime);
+                cmd.ExecuteNonQuery();
+
+                _isRunning = true;
+            }
+            await SetSkippedPick();
+            navigationManager.NavigateTo("/livedraft", forceLoad: true);       
         }
     }
 
@@ -830,7 +903,53 @@
         // } 
         // pick++;
 
-        _remainingTime = TimeSpan.FromHours(4);
+        DateTime currentTime = DateTime.Now;
+        DateTime oldTime = DateTime.MinValue;
+        TimeSpan timeDiff = TimeSpan.MinValue;
+
+        if (!_isRunning)
+        {
+            //SetSkippedPick();
+
+            //_isRunning = true;
+        }
+
+        //_isRunning = true;
+
+        var roster = DbFactory.CreateDbContext();
+
+        using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
+        {
+            cnn.Open();
+            using (var cmd = cnn.CreateCommand())
+            {
+                cmd.CommandText = @"SELECT Timestamp FROM DraftStats_Live WHERE ID = (SELECT MAX(Id) FROM DraftStats_Live WHERE Pokemon is NOT NULL)";
+                var parseTime = cmd.ExecuteScalar();
+                cmd.ExecuteNonQuery();
+
+                //var message = "time: {parseTime}";
+                oldTime = Convert.ToDateTime(parseTime);
+            }
+        }
+
+        if (oldTime != DateTime.MinValue)
+        {
+            //timeDiff = TimeSpan.FromHours(4) - (currentTime - oldTime);
+
+            timeDiff = TimeSpan.FromSeconds(7);
+            test = 0;
+        }
+        if (isTimeUp)
+        {
+            //timeDiff = TimeSpan.FromHours(4);
+
+            timeDiff = TimeSpan.FromSeconds(6);
+            test = 0;
+        }
+
+
+        //_remainingTime = currentTime;
+        _remainingTime = timeDiff;
         isTimeUp = false; // Reset "Time's Up!" flag
         if (!_isRunning)
         {
@@ -869,21 +988,25 @@
     // Button to set timer to countdown to 3 PM EST
     private void SetTimerTo3PM()
     {
-        var currentTime = DateTime.UtcNow.AddHours(-5); // Convert to EST (UTC-5)
-        var targetTime = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 14, 3, 0); // 3 PM EST
+        // var currentTime = DateTime.UtcNow.AddHours(-5); // Convert to EST (UTC-5)
+        // var targetTime = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 14, 3, 0); // 3 PM EST
 
-        if (currentTime > targetTime)
-        {
-            // If current time is already past 3 PM today, set the timer to 3 PM tomorrow
-            targetTime = targetTime.AddDays(1);
-        }
+        // if (currentTime > targetTime)
+        // {
+        //     // If current time is already past 3 PM today, set the timer to 3 PM tomorrow
+        //     targetTime = targetTime.AddDays(1);
+        // }
 
-        _remainingTime = targetTime - currentTime; // Calculate the time remaining to 3 PM EST
-        isTimeUp = false; // Reset "Time's Up!" flag
-        if (!_isRunning)
-        {
-            StartTimer();
-        }
+        // _remainingTime = targetTime - currentTime; // Calculate the time remaining to 3 PM EST
+        // isTimeUp = false; // Reset "Time's Up!" flag
+        // if (!_isRunning)
+        // {
+        //     StartTimer();
+        // }
+
+        SetSkippedPick();
+
+
     }
 
     // Button to reset the timer to 4 hours

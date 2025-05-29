@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.SqlServer.Management.Smo;
 
 namespace PokemonDraft.Models.Entities;
 
@@ -29,4 +30,8 @@ public class DraftStats
     [Column("tier")]
     [MaxLength(10)]
     public string? Tier { get; set; }
+
+    [Column("timestamp")]
+    [MaxLength(7)]
+    public DateTime Timestamp { get; set; }
 }
