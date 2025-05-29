@@ -11,6 +11,7 @@
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Components.Rendering
 @implements IAsyncDisposable
+@implements IDisposable
 @inject IDbContextFactory<PokemonDraft.Data.PokemonDraftContext> DbFactory
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
 @inject NavigationManager navigationManager
@@ -79,7 +80,7 @@
             </TemplateColumn>
         </QuickGrid>
     </div>
-        <Paginator State="@pagination" />
+        @* <Paginator State="@pagination" /> *@
 
     </div>
     <div>
@@ -94,7 +95,7 @@
                 </TemplateColumn>
             </QuickGrid>
         </div>
-        <Paginator State="@pagination" />
+        @* <Paginator State="@pagination" /> *@
     </div>
     <div>
         <h3>Roster</h3>
@@ -182,7 +183,7 @@
                 @if(@authContext.User.Identity!.Name!.ToLower() == nextPick.ToLower())
                     {
                         <div class="pick-button">
-                            <button @onclick="@(() => PickClick(context))"> PICK </button>
+                            <button disabled="@isTaskRunning" @onclick="@(() => PickClick(context))"> PICK </button>
                         </div>
                     } 
             </Authorized>
@@ -339,17 +340,32 @@
     string message = string.Empty;
     private bool confirmPopup = false;
     private bool isTaskRunning = false;
+    private bool _hasUpdated = false;
     private int pick = 0;
     private int round = 0;
 
     private string nextPick = string.Empty;
 
-    protected override async Task OnInitializedAsync()
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     FindNextPick();
+    //     GetPickAndRound();
+    //     StartTimer();
+    //     await base.OnInitializedAsync();
+    // }
+
+    protected override void OnAfterRender(bool firstRender)
     {
-        FindNextPick();
-        GetPickAndRound();
-        StartTimer();
-        await base.OnInitializedAsync();
+        // execute conditionally for loading data, otherwise this will load
+        // every time the page refreshes
+        if (firstRender && !_hasUpdated)
+        {
+            FindNextPick();
+            GetPickAndRound();
+            StartTimer();
+            _hasUpdated = true;
+            StateHasChanged();
+        }
     }
 
     public void GetPickAndRound()
@@ -414,7 +430,6 @@
         //!!!change timer to have pause button that only "Pyth" can see
         //!!!insert dummy data to timer skip (stub)
 
-        isTaskRunning = true;
         DateTime currentTime = DateTime.Now;
         var oldTime = context.DraftStats.Where(x => x.Tier != "").First();
 
@@ -774,30 +789,27 @@
             _timer.Elapsed += TimerElapsed;
         }
 
-        // _timer.Start();
-        // _isRunning = true;
+        _timer.Start();
+        //_isRunning = true;
 
         if (round < 5)
         {
-            _timer.Start();
-            //_isRunning = true;
-
             if (!_isRunning)
             {
-                //SetSkippedPick();
+                _isRunning = true;
+                SetSkippedPick();
             }
 
             SetTimerTo4Hours();
         }
         else if(round > 4)
         {
-            _timer.Start();
-            _isRunning = true;
             //SetTimerTo2Hours();
 
             if (!_isRunning)
             {
-                //SetSkippedPick();
+                _isRunning = true;
+                SetSkippedPick();
             }
 
             //SetTimerTo2Hours();
@@ -830,19 +842,18 @@
             }
             else
             {
-                _remainingTime = _remainingTime.Add(TimeSpan.FromSeconds(999)); //please stop entering this 15 times aaaaa
+                //_remainingTime = _remainingTime.Add(TimeSpan.FromSeconds(999)); //please stop entering this 15 times aaaaa
 
                 // Timer finished, show "Time's Up!" message
                 isTimeUp = true;
                 StopTimer();
                 InvokeAsync(StateHasChanged); // Update UI with "Time's Up!"
-                //_ = SetSkippedPick();
                 StartTimer();
             }
         }
     }
 
-    private async Task SetSkippedPick()
+    private void SetSkippedPick()
     {
         _isRunning = true;
 
@@ -879,9 +890,24 @@
 
                 _isRunning = true;
             }
-            await SetSkippedPick();
+            cnn.Close();
+            Dispose();
             navigationManager.NavigateTo("/livedraft", forceLoad: true);       
         }
+    }
+
+    public void Dispose()
+    {
+        Console.WriteLine("Dispose");
+        _timer?.Dispose();
+    }
+
+    // C# method to be invoked from JavaScript
+    [JSInvokable]
+    public void DisposeComponent()
+    {
+        // Dispose of resources
+        Dispose();
     }
 
     // Method to check if the current time is between 00:00 and 08:00 EST
@@ -896,26 +922,10 @@
     // Button to set timer to 4 hours
     private void SetTimerTo4Hours()
     {
-        // if(pick == playerCount)
-        // {
-        //     round++;
-        //     pick = 0;
-        // } 
-        // pick++;
-
         DateTime currentTime = DateTime.Now;
         DateTime oldTime = DateTime.MinValue;
         TimeSpan timeDiff = TimeSpan.MinValue;
-
-        if (!_isRunning)
-        {
-            //SetSkippedPick();
-
-            //_isRunning = true;
-        }
-
-        //_isRunning = true;
-
+        // string skipped = string.Empty;
         var roster = DbFactory.CreateDbContext();
 
         using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
@@ -927,25 +937,28 @@
                 var parseTime = cmd.ExecuteScalar();
                 cmd.ExecuteNonQuery();
 
+                // cmd.CommandText = @"SELECT Pokemon FROM DraftStats_Live WHERE ID = (SELECT MAX(Id) FROM DraftStats_Live WHERE Pokemon is NOT NULL)";
+                // var parseSkipped = cmd.ExecuteScalar() as string;
+                // cmd.ExecuteNonQuery();
+
                 //var message = "time: {parseTime}";
                 oldTime = Convert.ToDateTime(parseTime);
+                //skipped = Convert.ToString(parseSkipped!);
             }
         }
 
         if (oldTime != DateTime.MinValue)
         {
-            //timeDiff = TimeSpan.FromHours(4) - (currentTime - oldTime);
+            timeDiff = TimeSpan.FromHours(4) - (currentTime - oldTime);
 
-            timeDiff = TimeSpan.FromSeconds(7);
-            test = 0;
+            //timeDiff = TimeSpan.FromSeconds(7);
         }
-        if (isTimeUp)
-        {
-            //timeDiff = TimeSpan.FromHours(4);
+        // if (skipped == "Skipped")
+        // {
+        //     timeDiff = TimeSpan.FromHours(4) - (currentTime - oldTime);
 
-            timeDiff = TimeSpan.FromSeconds(6);
-            test = 0;
-        }
+        //     //timeDiff = TimeSpan.FromSeconds(6);
+        // }
 
 
         //_remainingTime = currentTime;
