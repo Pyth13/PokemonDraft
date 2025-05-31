@@ -104,22 +104,30 @@
         <h4>Search Trainer:
 
         <select @bind="trainerFilter">
-            <option value="Pyth">Pyth</option>
-            <option value="Rusty">Rusty</option>
-            <option value="Inuktitut">Inuktitut</option>
-            <option value="Delsere">Delsere</option>
-            <option value="Austin">Austin</option>
-            <option value="Tori">Tori</option>
-            <option value="ThatHalfAss">ThatHalfAss</option>
+            <option value="Abby">Abby</option>
             <option value="Bigbuff">Bigbuff</option>
-            <option value="Ceise">Ceise</option>
-            <option value="Orasyn">Orasyn</option>
-            <option value="Chax">Abby</option>
-            <option value="Kaboomie">Kaboomie</option>
-            <option value="Zuzu">Zuzu</option>
-            <option value="Brew">Brew</option>
-            <option value="Aaron">Aaron</option>
+            <option value="Joby">Joby</option>
+            <option value="Microblast">Microblast</option>
+            <option value="Inuktitut">Inuktitut</option>
+            <option value="Sky">Sky</option>
+            <option value="Zach">Zach</option>
+            <option value="1badidea">1badidea</option>
+            <option value="Austin">Austin</option>
+            <option value="Rusty">Rusty</option>
             <option value="Locke">Locke</option>
+            <option value="Hiyori">Hiyori</option>
+            <option value="Fishing Mama">Fishing Mama</option>
+            <option value="Fallen">Fallen</option>
+            <option value="Tori">Tori</option>
+            <option value="Kaboomie">Kaboomie</option>
+            <option value="Skyguy">Skyguy</option>
+            <option value="Scott">Scott</option>
+            <option value="Brew">Brew</option>
+            <option value="Mike">Mike</option>
+            <option value="Pyth">Pyth</option>
+            <option value="Orasyn">Orasyn</option>
+            <option value="Del">Del</option>
+            <option value="Ceise">Ceise</option>
         </select>
         </h4>
 
@@ -178,7 +186,7 @@
         <h3>Mega</h3>
         <QuickGrid Items="MegaFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
-        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        @* <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/> *@
         <TemplateColumn>
         <AuthorizeView Context = "authContext">
             <Authorized>
@@ -200,7 +208,7 @@
         <h3>Tier 1</h3>
         <QuickGrid Items="TierOneFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
-        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        @* <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/> *@
         <TemplateColumn>
             <AuthorizeView Context="authContext">
                 <Authorized>
@@ -222,7 +230,7 @@
         <h3>Tier 2</h3>
         <QuickGrid Items="TierTwoFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
-        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        @* <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/> *@
         <TemplateColumn>
             <AuthorizeView Context="authContext">
                 <Authorized>
@@ -244,7 +252,7 @@
         <h3>Tier 3</h3>
         <QuickGrid Items="TierThreeFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
-        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        @* <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/> *@
         <TemplateColumn>
             <AuthorizeView Context="authContext">
                 <Authorized>
@@ -266,7 +274,7 @@
         <h3>Tier 4</h3>
         <QuickGrid Items="TierFourFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
-        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        @* <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/> *@
         <TemplateColumn>
             <AuthorizeView Context="authContext">
                 <Authorized>
@@ -288,7 +296,7 @@
         <h3>Tier 5</h3>
         <QuickGrid Items="TierFiveFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
-        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        @* <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/> *@
         <TemplateColumn>
             <AuthorizeView Context="authContext">
                 <Authorized>
@@ -310,7 +318,7 @@
         <h3>Untiered(T5) <br /></h3>
         <QuickGrid Items="UntieredFilter" Theme="pokedex">
         <PropertyColumn Property="pokedex => pokedex.Name" Sortable="true"/>
-        <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/>
+        @* <PropertyColumn Property="pokedex => pokedex.Trainer" Sortable="true"/> *@
         <TemplateColumn>
             <AuthorizeView Context="authContext">
                 <Authorized>
@@ -492,7 +500,7 @@
         //!change timer to have pause button that only "Pyth" can see! I DONT THINK THIS WILL WORK
 
         DateTime currentTime = DateTime.Now;
-        var oldTime = context.DraftStats.Where(x => x.Tier != "").First();
+        //var oldTime = context.DraftStats.Where(x => x.Tier != "").First();
         var roster = DbFactory.CreateDbContext();
 
         using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
@@ -654,7 +662,8 @@
                             cmd.ExecuteNonQuery();
                         }
                     }
-                    navigationManager.NavigateTo("/livedraft", forceLoad: true);
+                    //navigationManager.NavigateTo("/livedraft", forceLoad: true);
+                    navigationManager.NavigateTo("/discord", forceLoad: true);
                 }
                 else
                 {
@@ -978,7 +987,7 @@
     //private int pick = 1;
     private int timezone;
     private bool penalty = false;
-    private int playerCount = 16;
+    //private int playerCount = 24;
     private int test = 0;
 
     // Method to start the countdown timer
@@ -1151,6 +1160,10 @@
             timeDiff = TimeSpan.FromHours(4) - (currentTime - oldTime);
 
             //timeDiff = TimeSpan.FromSeconds(7);
+        }
+        else
+        {
+            timeDiff = TimeSpan.FromHours(4);
         }
 
         //_remainingTime = currentTime;

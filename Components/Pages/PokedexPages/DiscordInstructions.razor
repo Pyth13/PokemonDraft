@@ -1,0 +1,73 @@
+﻿@page "/discord"
+@rendermode InteractiveServer
+@using System.Timers
+@using System.Globalization
+@using Microsoft.Data.SqlClient
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using PokemonDraft.Models
+@using PokemonDraft.Models.Entities
+@using PokemonDraft.Data
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Components.Rendering
+@inject IDbContextFactory<PokemonDraft.Data.PokemonDraftContext> DbFactory
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
+<h1>YOUR PICK HAS BEEN SAVED (BUT YOU SHOULD DOUBLE CHECK DRAFT HOME TO BE CERTAIN)</h1>
+
+<h2>Go into the #draft channel in discord, and post a message that states what pokemon you picked, and pings the next player in line (it should be @nextPick)</h2>
+
+<h3>ex: "i picked pikachu, next pick is &#64;@nextPick"</h3>
+@code {
+    private PokemonDraftContext context = default!;
+
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+
+    private string nextPick = string.Empty;
+    private bool _hasUpdated = false;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // execute conditionally for loading data, otherwise this will load
+        // every time the page refreshes
+        if (firstRender && !_hasUpdated)
+        {
+            FindNextPick();
+            _hasUpdated = true;
+            StateHasChanged();
+        }
+    }
+
+    public void FindNextPick()
+    {
+        var roster = DbFactory.CreateDbContext();
+
+        using (var cnn = new SqlConnection(@"Server=(LocalDB)\MSSQLLocalDB;Database=PokemonDraftContext-0ca97d9a-edc5-4557-8bad-e9ce5b55bbf8;Trusted_Connection=True;"))
+        {
+            cnn.Open();
+            using (var cmd = cnn.CreateCommand())
+            {
+                var authstate = GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+                var user = authstate.Result.User;
+
+                if (user.Identity!.IsAuthenticated)
+                {
+                    cmd.CommandText = @"SELECT Owner FROM DraftStats_Live WHERE Pokemon IS NULL";
+                    int trainerId = Convert.ToInt32(cmd.ExecuteScalar());
+                    cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = @"SELECT team_owner FROM Trainer_Live WHERE Id = @TrainerId";
+                    cmd.Parameters.AddWithValue("@TrainerId", trainerId);
+                    var localPick = cmd.ExecuteScalar() as string;
+                    cmd.ExecuteNonQuery();
+
+                    nextPick = localPick!;
+                }
+            }
+        }
+    }
+}
+
